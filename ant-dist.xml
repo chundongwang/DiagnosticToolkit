@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<project default="create_run_jar" name="Create Runnable Jar for Project DiagnosticToolkit with libraries in sub-folder">
+    <!--this file was created by Eclipse Runnable JAR Export Wizard-->
+    <!--ANT 1.7 is required                                        -->
+    <target name="create_run_jar">
+        <jar destfile="C:/Users/Chundong/workspace/DiagnosticToolkit/dist/DiagnosticToolkit.jar">
+            <manifest>
+                <attribute name="Main-Class" value="com.microsoft.projecta.tools.ApkLauncher"/>
+                <attribute name="Class-Path" value=". DiagnosticToolkit_lib/swing2swt.jar DiagnosticToolkit_lib/swt.jar DiagnosticToolkit_lib/org.eclipse.core.commands_3.6.100.v20140528-1422.jar DiagnosticToolkit_lib/org.eclipse.equinox.common_3.6.200.v20130402-1505.jar DiagnosticToolkit_lib/org.eclipse.jface_3.10.2.v20141021-1035.jar DiagnosticToolkit_lib/org.eclipse.osgi_3.10.2.v20150203-1939.jar DiagnosticToolkit_lib/org.eclipse.ui.workbench_3.106.2.v20150204-1030.jar"/>
+            </manifest>
+            <fileset dir="C:/Users/Chundong/workspace/DiagnosticToolkit/bin"/>
+            <fileset dir="C:/Users/Chundong/workspace/org.eclipse.swt"/>
+        </jar>
+        <delete dir="C:/Users/Chundong/workspace/DiagnosticToolkit/dist/DiagnosticToolkit_lib"/>
+        <mkdir dir="C:/Users/Chundong/workspace/DiagnosticToolkit/dist/DiagnosticToolkit_lib"/>
+        <copy file="C:/Users/Chundong/workspace/DiagnosticToolkit/swing2swt.jar" todir="C:/Users/Chundong/workspace/DiagnosticToolkit/dist/DiagnosticToolkit_lib"/>
+        <copy file="C:/Users/Chundong/workspace/org.eclipse.swt/swt.jar" todir="C:/Users/Chundong/workspace/DiagnosticToolkit/dist/DiagnosticToolkit_lib"/>
+        <copy file="C:/tools/eclipse-java-luna-SR2-win32-x86_64/eclipse/plugins/org.eclipse.core.commands_3.6.100.v20140528-1422.jar" todir="C:/Users/Chundong/workspace/DiagnosticToolkit/dist/DiagnosticToolkit_lib"/>
+        <copy file="C:/tools/eclipse-java-luna-SR2-win32-x86_64/eclipse/plugins/org.eclipse.equinox.common_3.6.200.v20130402-1505.jar" todir="C:/Users/Chundong/workspace/DiagnosticToolkit/dist/DiagnosticToolkit_lib"/>
+        <copy file="C:/tools/eclipse-java-luna-SR2-win32-x86_64/eclipse/plugins/org.eclipse.jface_3.10.2.v20141021-1035.jar" todir="C:/Users/Chundong/workspace/DiagnosticToolkit/dist/DiagnosticToolkit_lib"/>
+        <copy file="C:/tools/eclipse-java-luna-SR2-win32-x86_64/eclipse/plugins/org.eclipse.osgi_3.10.2.v20150203-1939.jar" todir="C:/Users/Chundong/workspace/DiagnosticToolkit/dist/DiagnosticToolkit_lib"/>
+        <copy file="C:/tools/eclipse-java-luna-SR2-win32-x86_64/eclipse/plugins/org.eclipse.ui.workbench_3.106.2.v20150204-1030.jar" todir="C:/Users/Chundong/workspace/DiagnosticToolkit/dist/DiagnosticToolkit_lib"/>
+    </target>
+</project>
