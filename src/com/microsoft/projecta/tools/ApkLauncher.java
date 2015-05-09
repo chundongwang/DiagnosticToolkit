@@ -1,5 +1,7 @@
 package com.microsoft.projecta.tools;
 
+import java.io.File;
+
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.Shell;
@@ -17,7 +19,9 @@ import org.eclipse.swt.custom.SashForm;
 import org.eclipse.swt.widgets.Button;
 import org.eclipse.swt.widgets.Text;
 import org.eclipse.swt.widgets.Composite;
+
 import swing2swt.layout.FlowLayout;
+
 import org.eclipse.wb.swt.SWTResourceManager;
 import org.eclipse.swt.custom.ScrolledComposite;
 import org.eclipse.swt.widgets.TabFolder;
@@ -27,13 +31,22 @@ import org.eclipse.swt.custom.CTabItem;
 import org.eclipse.swt.layout.RowData;
 import org.eclipse.swt.widgets.Combo;
 import org.eclipse.swt.custom.CCombo;
+import org.eclipse.swt.events.ShellAdapter;
+import org.eclipse.swt.events.ShellEvent;
 
 public class ApkLauncher {
 
     protected Shell shlDiagnosticLauncher;
-    private Text textApkPath;
-    private Text textOutDir;
     private Text textBuildDrop;
+    private Text textOriginApkPath;
+    private Text textOutputDir;
+    
+    private final class ApkLauncherShellAdapter extends ShellAdapter {
+    	@Override
+    	public void shellActivated(ShellEvent e) {
+            textBuildDrop.setText("hellow");
+    	}
+    }
 
     /**
      * Launch the application.
@@ -54,7 +67,6 @@ public class ApkLauncher {
     public void open() {
         Display display = Display.getDefault();
         createContents();
-        textBuildDrop.setText("hellow");
         shlDiagnosticLauncher.open();
         shlDiagnosticLauncher.layout();
         while (!shlDiagnosticLauncher.isDisposed()) {
@@ -69,58 +81,28 @@ public class ApkLauncher {
      */
     protected void createContents() {
         shlDiagnosticLauncher = new Shell();
+        shlDiagnosticLauncher.addShellListener(new ApkLauncherShellAdapter());
         shlDiagnosticLauncher.setSize(450, 576);
         shlDiagnosticLauncher.setText("Diagnostic Launcher");
         shlDiagnosticLauncher.setLayout(new GridLayout(1, false));
         
         Group grpInout = new Group(shlDiagnosticLauncher, SWT.NONE);
-        grpInout.setLayout(new GridLayout(1, false));
+        grpInout.setLayout(new GridLayout(2, false));
         grpInout.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, false, 1, 1));
         grpInout.setText("In/Out");
         grpInout.setBounds(0, 0, 70, 82);
         
-        Composite composite_inout_apk = new Composite(grpInout, SWT.NONE);
-        composite_inout_apk.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, false, 1, 1));
-        composite_inout_apk.setLayout(new FormLayout());
+        textOriginApkPath = new Text(grpInout, SWT.BORDER);
+        textOriginApkPath.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, false, 1, 1));
         
-        textApkPath = new Text(composite_inout_apk, SWT.BORDER);
-        FormData fd_textApkPath = new FormData();
-        fd_textApkPath.top = new FormAttachment(0);
-        fd_textApkPath.left = new FormAttachment(0);
-        textApkPath.setLayoutData(fd_textApkPath);
+        Button btnOriginApk = new Button(grpInout, SWT.NONE);
+        btnOriginApk.setText("Origin Apk");
         
-        Button btnApkFinder = new Button(composite_inout_apk, SWT.NONE);
-        fd_textApkPath.right = new FormAttachment(btnApkFinder, -6);
-        fd_textApkPath.bottom = new FormAttachment(btnApkFinder, 0, SWT.BOTTOM);
-        FormData fd_btnApkFinder = new FormData();
-        fd_btnApkFinder.width = 80;
-        fd_btnApkFinder.top = new FormAttachment(0);
-        fd_btnApkFinder.right = new FormAttachment(100);
-        fd_btnApkFinder.bottom = new FormAttachment(100);
-        btnApkFinder.setLayoutData(fd_btnApkFinder);
-        btnApkFinder.setText("Original Apk");
+        textOutputDir = new Text(grpInout, SWT.BORDER);
+        textOutputDir.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, false, 1, 1));
         
-        Composite composite_inout_outdir = new Composite(grpInout, SWT.NONE);
-        composite_inout_outdir.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, false, 1, 1));
-        composite_inout_outdir.setBounds(0, 0, 64, 64);
-        composite_inout_outdir.setLayout(new FormLayout());
-        
-        textOutDir = new Text(composite_inout_outdir, SWT.BORDER);
-        FormData fd_textOutDir = new FormData();
-        fd_textOutDir.top = new FormAttachment(0);
-        fd_textOutDir.left = new FormAttachment(0);
-        textOutDir.setLayoutData(fd_textOutDir);
-        
-        Button btnOutDirFinder = new Button(composite_inout_outdir, SWT.NONE);
-        fd_textOutDir.right = new FormAttachment(btnOutDirFinder, -6);
-        fd_textOutDir.bottom = new FormAttachment(btnOutDirFinder, 0, SWT.BOTTOM);
-        FormData fd_btnOutDirFinder = new FormData();
-        fd_btnOutDirFinder.width = 80;
-        fd_btnOutDirFinder.top = new FormAttachment(0);
-        fd_btnOutDirFinder.right = new FormAttachment(100);
-        fd_btnOutDirFinder.bottom = new FormAttachment(100);
-        btnOutDirFinder.setLayoutData(fd_btnOutDirFinder);
-        btnOutDirFinder.setText("Output Dir");
+        Button btnOutputDir = new Button(grpInout, SWT.NONE);
+        btnOutputDir.setText("Output Dir");
         
         Group grpSettings = new Group(shlDiagnosticLauncher, SWT.NONE);
         grpSettings.setLayout(new FillLayout(SWT.VERTICAL));
