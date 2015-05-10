@@ -1,39 +1,30 @@
 package com.microsoft.projecta.tools;
 
-import java.io.File;
-
 import org.eclipse.swt.SWT;
-import org.eclipse.swt.widgets.Display;
-import org.eclipse.swt.widgets.Shell;
-import org.eclipse.swt.widgets.Group;
-import org.eclipse.swt.layout.FillLayout;
-import org.eclipse.swt.layout.RowLayout;
-import org.eclipse.swt.layout.FormLayout;
-import org.eclipse.swt.layout.FormData;
-import org.eclipse.swt.layout.FormAttachment;
-import org.eclipse.swt.custom.StackLayout;
-import org.eclipse.swt.layout.GridLayout;
-import org.eclipse.swt.layout.GridData;
-import org.eclipse.swt.widgets.Label;
-import org.eclipse.swt.custom.SashForm;
-import org.eclipse.swt.widgets.Button;
-import org.eclipse.swt.widgets.Text;
-import org.eclipse.swt.widgets.Composite;
-
-import swing2swt.layout.FlowLayout;
-
-import org.eclipse.wb.swt.SWTResourceManager;
 import org.eclipse.swt.custom.ScrolledComposite;
+import org.eclipse.swt.events.MouseAdapter;
+import org.eclipse.swt.events.MouseEvent;
+import org.eclipse.swt.events.SelectionAdapter;
+import org.eclipse.swt.events.SelectionEvent;
+import org.eclipse.swt.layout.FillLayout;
+import org.eclipse.swt.layout.FormAttachment;
+import org.eclipse.swt.layout.FormData;
+import org.eclipse.swt.layout.FormLayout;
+import org.eclipse.swt.layout.GridData;
+import org.eclipse.swt.layout.GridLayout;
+import org.eclipse.swt.widgets.Button;
+import org.eclipse.swt.widgets.Combo;
+import org.eclipse.swt.widgets.Composite;
+import org.eclipse.swt.widgets.DirectoryDialog;
+import org.eclipse.swt.widgets.Display;
+import org.eclipse.swt.widgets.FileDialog;
+import org.eclipse.swt.widgets.Group;
+import org.eclipse.swt.widgets.MessageBox;
+import org.eclipse.swt.widgets.Shell;
 import org.eclipse.swt.widgets.TabFolder;
 import org.eclipse.swt.widgets.TabItem;
-import org.eclipse.swt.custom.CTabFolder;
-import org.eclipse.swt.custom.CTabItem;
-import org.eclipse.swt.layout.RowData;
-import org.eclipse.swt.widgets.Combo;
-import org.eclipse.swt.custom.CCombo;
-import org.eclipse.swt.events.ShellAdapter;
-import org.eclipse.swt.events.ShellEvent;
-import org.eclipse.jface.dialogs.MessageDialog;
+import org.eclipse.swt.widgets.Text;
+import org.eclipse.wb.swt.SWTResourceManager;
 
 public class ApkLauncher {
 
@@ -54,20 +45,37 @@ public class ApkLauncher {
 		changeBranch(Branch.Develop, true);
 	}
 
-	private void changeBranch(Branch branch, boolean suppressConfirmDialog) {
-		if (suppressConfirmDialog
-				|| MessageDialog
-						.openConfirm(
-								shlDiagnosticLauncher,
-								"Change Branch",
-								"You've just changed branch to "
-										+ branch
-										+ ". \nDo you want to reload default config for build drop, etc.?")) {
+	/**
+	 * Change branch to specified one which might cause reloading all default
+	 * configs. If we decided to reload default config, another thread will be
+	 * spin'ed off to serve it and asyncExec back to UI thread to update the
+	 * related controls.
+	 * 
+	 * @param branch
+	 *            The branch to be switched to.
+	 * @param suppressConfirmDialog
+	 *            If we shall prompt a dialog to ask user
+	 */
+	private void changeBranch(final Branch branch, boolean suppressConfirmDialog) {
+		int response = SWT.YES;
+
+		if (!suppressConfirmDialog) {
+			MessageBox messageBox = new MessageBox(shlDiagnosticLauncher,
+					SWT.ICON_QUESTION | SWT.YES | SWT.NO);
+			messageBox.setText("Change Branch");
+			messageBox
+					.setMessage("You've just changed branch to "
+							+ branch
+							+ ". \nDo you want to reload default config for build drop, etc.?");
+			response = messageBox.open();
+		}
+
+		if (response == SWT.YES) {
 			// on UI thread
 			new Thread(new Runnable() {
 				@Override
 				public void run() {
-					LaunchConfig.Builder builder = new LaunchConfig.Builder(
+					final LaunchConfig.Builder builder = new LaunchConfig.Builder(
 							branch);
 					display.asyncExec(new Runnable() {
 						@Override
@@ -80,13 +88,109 @@ public class ApkLauncher {
 		}
 	}
 
+	private void changeOriginApkPath() {
+		FileDialog openApkFileDialog = new FileDialog(
+				this.shlDiagnosticLauncher, SWT.OPEN);
+		openApkFileDialog.setText("Find the original Apk");
+		openApkFileDialog.setFilterPath(System.getProperty("user.dir"));
+		String[] filterExt = { "*.apk" };
+		openApkFileDialog.setFilterExtensions(filterExt);
+		String originApkPath = openApkFileDialog.open();
+		if (originApkPath != null) {
+			mConfig.setOriginApkPath(originApkPath);
+			syncConfigToUI(null);
+		}
+	}
+
+	private String pickDirectory(String title, String msg, String default_value) {
+		DirectoryDialog dirPickerDialog = new DirectoryDialog(
+				this.shlDiagnosticLauncher);
+		dirPickerDialog.setText(title);
+		dirPickerDialog.setMessage(msg);
+		if (default_value != null) {
+			dirPickerDialog.setFilterPath(default_value);
+		}
+		return dirPickerDialog.open();
+	}
+
+	private void changeOutdirPath() {
+		String outdirPath = pickDirectory(
+				"Pick the output dir",
+				"Select a folder for drop injected apk, various log files and screen shot images.",
+				mConfig.getOutdirPath());
+		if (outdirPath != null) {
+			mConfig.setOutdirPath(outdirPath);
+			syncConfigToUI(null);
+		}
+	}
+
+	private void changeBuildDropPath() {
+		String buildDropPath = pickDirectory(
+				"Pick the build drop dir",
+				"Select a folder either from nightly build or your aosp output folder.",
+				mConfig.getBuildDropPath());
+		if (buildDropPath != null) {
+			mConfig.setBuildDropPath(buildDropPath);
+			syncConfigToUI(null);
+		}
+	}
+
+	private void changeTakehomeScriptPath() {
+		String takehomePath = pickDirectory(
+				"Pick the take home dir",
+				"Select a folder with takehome setup scripts.",
+				mConfig.getTakehomeScriptPath());
+		if (takehomePath != null) {
+			mConfig.setTakehomeScriptPath(takehomePath);
+			syncConfigToUI(null);
+		}
+	}
+
+	private void changeSdkToolsPath() {
+		String sdkToolPath = pickDirectory(
+				"Pick the sdk tool dir",
+				"Select a folder with Project A sdk tools.",
+				mConfig.getSdkToolsPath());
+		if (sdkToolPath != null) {
+			mConfig.setSdkToolsPath(sdkToolPath);
+			syncConfigToUI(null);
+		}
+	}
+
+	private void changeInjectionScriptPath() {
+		String injectScriptPath = pickDirectory(
+				"Pick the injection path",
+				"Select a folder with injection scripts and related tools.",
+				mConfig.getInjectionScriptPath());
+		if (injectScriptPath != null) {
+			mConfig.setInjectionScriptPath(injectScriptPath);
+			syncConfigToUI(null);
+		}
+	}
+
+	/**
+	 * Sync launch config to UI controls
+	 * 
+	 * @param config
+	 *            The config to replace stored mConfig. Use null if just want to
+	 *            trigger a sync.
+	 */
 	private void syncConfigToUI(LaunchConfig config) {
 		// on UI thread
-		mConfig = config;
+		if (config != null) {
+			mConfig = config;
+		}
+
 		mTextBuildDrop.setText(mConfig.getBuildDropPath());
 		mTextTakehomePath.setText(mConfig.getTakehomeScriptPath());
 		mTextSdkToolsPath.setText(mConfig.getSdkToolsPath());
 		mTextInjectionScriptPath.setText(mConfig.getInjectionScriptPath());
+		if (mConfig.hasOriginApkPath()) {
+			mTextOriginApkPath.setText(mConfig.getOriginApkPath());
+		}
+		if (mConfig.hasOutdirPath()) {
+			mTextOutputDir.setText(mConfig.getOutdirPath());
+		}
 	}
 
 	/**
@@ -140,6 +244,12 @@ public class ApkLauncher {
 				true, false, 1, 1));
 
 		Button btnOriginApk = new Button(grpInout, SWT.NONE);
+		btnOriginApk.addMouseListener(new MouseAdapter() {
+			@Override
+			public void mouseUp(MouseEvent e) {
+				changeOriginApkPath();
+			}
+		});
 		btnOriginApk.setText("Origin Apk");
 
 		mTextOutputDir = new Text(grpInout, SWT.BORDER);
@@ -147,6 +257,12 @@ public class ApkLauncher {
 				false, 1, 1));
 
 		Button btnOutputDir = new Button(grpInout, SWT.NONE);
+		btnOutputDir.addMouseListener(new MouseAdapter() {
+			@Override
+			public void mouseUp(MouseEvent e) {
+				changeOutdirPath();
+			}
+		});
 		btnOutputDir.setText("Output Dir");
 
 		Group grpSettings = new Group(shlDiagnosticLauncher, SWT.NONE);
@@ -175,8 +291,15 @@ public class ApkLauncher {
 				scrolledComposite_basic, SWT.NONE);
 		composite_basic_inner.setLayout(new GridLayout(2, false));
 
-		Combo comboBranch = new Combo(composite_basic_inner, SWT.BORDER);
-		comboBranch.setItems(new String[] { "Developer", "Master" });
+		final Combo comboBranch = new Combo(composite_basic_inner, SWT.READ_ONLY);
+		comboBranch.addSelectionListener(new SelectionAdapter() {
+			@Override
+			public void widgetSelected(SelectionEvent e) {
+				changeBranch(Branch.valueOf(comboBranch.getItem(comboBranch
+						.getSelectionIndex())), false);
+			}
+		});
+		comboBranch.setItems(new String[] { "Develop", "Master" });
 		comboBranch.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, false,
 				2, 1));
 		comboBranch.select(0);
@@ -186,11 +309,17 @@ public class ApkLauncher {
 				false, 1, 1));
 
 		Button btnBuildFinder = new Button(composite_basic_inner, SWT.NONE);
+		btnBuildFinder.addMouseListener(new MouseAdapter() {
+			@Override
+			public void mouseUp(MouseEvent e) {
+				changeBuildDropPath();
+			}
+		});
 		btnBuildFinder.setLayoutData(new GridData(SWT.RIGHT, SWT.FILL, false,
 				false, 1, 1));
 		btnBuildFinder.setText("Build Drop");
 
-		Combo comboFlavor = new Combo(composite_basic_inner, SWT.BORDER);
+		Combo comboFlavor = new Combo(composite_basic_inner, SWT.READ_ONLY);
 		GridData gd_comboFlavor = new GridData(SWT.FILL, SWT.FILL, true, false,
 				2, 1);
 		gd_comboFlavor.widthHint = 264;
@@ -229,6 +358,12 @@ public class ApkLauncher {
 				true, false, 1, 1));
 
 		Button btnTakehomeScript = new Button(composite_advance_inner, SWT.NONE);
+		btnTakehomeScript.addMouseListener(new MouseAdapter() {
+			@Override
+			public void mouseUp(MouseEvent e) {
+				changeTakehomeScriptPath();
+			}
+		});
 		btnTakehomeScript.setLayoutData(new GridData(SWT.FILL, SWT.CENTER,
 				false, false, 1, 1));
 		btnTakehomeScript.setText("TakeHome Script");
@@ -238,6 +373,12 @@ public class ApkLauncher {
 				true, false, 1, 1));
 
 		Button btnSdkTools = new Button(composite_advance_inner, SWT.NONE);
+		btnSdkTools.addMouseListener(new MouseAdapter() {
+			@Override
+			public void mouseUp(MouseEvent e) {
+				changeSdkToolsPath();
+			}
+		});
 		btnSdkTools.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, false,
 				false, 1, 1));
 		btnSdkTools.setText("SDK Tools");
@@ -248,6 +389,12 @@ public class ApkLauncher {
 
 		Button btnInjectionScript = new Button(composite_advance_inner,
 				SWT.NONE);
+		btnInjectionScript.addMouseListener(new MouseAdapter() {
+			@Override
+			public void mouseUp(MouseEvent e) {
+				changeInjectionScriptPath();
+			}
+		});
 		btnInjectionScript.setLayoutData(new GridData(SWT.FILL, SWT.CENTER,
 				false, false, 1, 1));
 		btnInjectionScript.setText("Injection Script");
