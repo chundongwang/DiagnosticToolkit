@@ -6,6 +6,7 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
+import java.util.logging.Logger;
 
 public final class LaunchConfig {
 
@@ -16,6 +17,9 @@ public final class LaunchConfig {
 	private String mInjectionScriptPath;
 	private String mOriginApkPath;
 	private String mOutdirPath;
+
+	private LaunchConfig() {
+	}
 
 	/**
 	 * @param buildDropPath
@@ -93,9 +97,6 @@ public final class LaunchConfig {
 		mOutdirPath = outdirPath;
 	}
 
-	private LaunchConfig() {
-	}
-
 	/**
 	 * @return the buildDropPath
 	 */
@@ -124,7 +125,27 @@ public final class LaunchConfig {
 		return mInjectionScriptPath;
 	}
 
+	public String toString() {
+		StringBuilder builder = new StringBuilder();
+		builder.append(String.format("Build Drop Path=%s", mBuildDropPath));
+		builder.append('\n');
+		builder.append(String.format("Takehome Script Path=%s",
+				mTakehomeScriptPath));
+		builder.append('\n');
+		builder.append(String.format("Sdk Tools Path=%s", mSdkToolsPath));
+		builder.append('\n');
+		builder.append(String.format("Injection Script Path=%s",
+				mInjectionScriptPath));
+		builder.append('\n');
+		builder.append(String.format("Origin Apk Path=%s", mOriginApkPath));
+		builder.append('\n');
+		builder.append(String.format("Output Dir Path=%s", mOutdirPath));
+		return builder.toString();
+	}
+
 	public static final class Builder {
+		private static Logger logger = Logger.getLogger(Builder.class
+				.getSimpleName());
 		private LaunchConfig mConfigInstance;
 		private Branch mBranch;
 
@@ -179,7 +200,7 @@ public final class LaunchConfig {
 							reader.close();
 						} catch (IOException e) {
 							e.printStackTrace();
-							return e.getMessage(); 
+							return e.getMessage();
 						}
 					}
 				}
@@ -208,6 +229,8 @@ public final class LaunchConfig {
 			if (mConfigInstance.mOutdirPath == null) {
 				mConfigInstance.mOutdirPath = System.getProperty("user.dir");
 			}
+			logger.fine(String.format("Launch config loaded as\n%s",
+					mConfigInstance));
 			return mConfigInstance;
 		}
 	}
