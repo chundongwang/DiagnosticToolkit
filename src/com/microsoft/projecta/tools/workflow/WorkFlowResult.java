@@ -1,19 +1,20 @@
+
 package com.microsoft.projecta.tools.workflow;
 
 public enum WorkFlowResult {
-	SUCCESS, FAILED;
+    SUCCESS, FAILED, CANCELLED;
 
-	private String mReason;
-	
-	boolean hasReason() {
-		return mReason == null;
-	}
+    private String mReason;
 
-	void setReason(String reason) {
-		mReason = reason;
-	}
+    boolean hasReason() {
+        return mReason == null;
+    }
 
-	String getReason() {
-		return mReason;
-	}
+    void setReason(String reason) {
+        mReason = reason;
+    }
+
+    String getReason() {
+        return mReason;
+    }
 }
