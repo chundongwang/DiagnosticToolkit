@@ -17,8 +17,15 @@ public final class LaunchConfig {
     private String mInjectionScriptPath;
     private String mOriginApkPath;
     private String mOutdirPath;
+    
+    private boolean mShouldProvisionVM;
+    private boolean mShouldInject;
+    private boolean mShouldTakeSnapshot;
 
     private LaunchConfig() {
+    	mShouldProvisionVM = false;
+    	mShouldInject = true;
+    	mShouldTakeSnapshot = true;
     }
 
     /**
@@ -119,7 +126,49 @@ public final class LaunchConfig {
         return mInjectionScriptPath;
     }
 
-    public String toString() {
+    /**
+	 * @return the shouldProvisionVM
+	 */
+	public boolean shouldProvisionVM() {
+		return mShouldProvisionVM;
+	}
+
+	/**
+	 * @param shouldProvisionVM the shouldProvisionVM to set
+	 */
+	public void setShouldProvisionVM(boolean shouldProvisionVM) {
+		mShouldProvisionVM = shouldProvisionVM;
+	}
+
+	/**
+	 * @return the shouldInject
+	 */
+	public boolean shouldInject() {
+		return mShouldInject;
+	}
+
+	/**
+	 * @param shouldInject the shouldInject to set
+	 */
+	public void setShouldInject(boolean shouldInject) {
+		mShouldInject = shouldInject;
+	}
+
+	/**
+	 * @return the shouldTakeSnapshot
+	 */
+	public boolean shouldTakeSnapshot() {
+		return mShouldTakeSnapshot;
+	}
+
+	/**
+	 * @param shouldTakeSnapshot the shouldTakeSnapshot to set
+	 */
+	public void setShouldTakeSnapshot(boolean shouldTakeSnapshot) {
+		mShouldTakeSnapshot = shouldTakeSnapshot;
+	}
+
+	public String toString() {
         StringBuilder builder = new StringBuilder();
         builder.append(String.format("Build Drop Path=%s", mBuildDropPath));
         builder.append('\n');
@@ -169,6 +218,21 @@ public final class LaunchConfig {
 
         public Builder addInjection(String injectionPath) {
             mConfigInstance.mInjectionScriptPath = injectionPath;
+            return this;
+        }
+
+        public Builder shouldInject(boolean shouldInject) {
+            mConfigInstance.mShouldInject = shouldInject;
+            return this;
+        }
+
+        public Builder shouldProvisionVM(boolean shouldProvisionVM) {
+            mConfigInstance.mShouldProvisionVM = shouldProvisionVM;
+            return this;
+        }
+
+        public Builder shouldTakeSnapshot(boolean shouldTakeSnapshot) {
+            mConfigInstance.mShouldTakeSnapshot = shouldTakeSnapshot;
             return this;
         }
 

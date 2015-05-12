@@ -47,6 +47,9 @@ public class ApkLauncher {
     private Text mTextTakehomePath;
     private Text mTextSdkToolsPath;
     private Text mTextInjectionScriptPath;
+    private Button mBtnProvisionVm;
+    private Button mBtnInjectApk;
+    private Button mBtnTakeScreenshot;
 
     private void init() {
         // On UI thread
@@ -80,12 +83,12 @@ public class ApkLauncher {
             new Thread(new Runnable() {
                 @Override
                 public void run() {
-                    final LaunchConfig.Builder builder = new LaunchConfig.Builder(
-                            branch);
+                    final LaunchConfig config = new LaunchConfig.Builder(
+                            branch).build();
                     display.asyncExec(new Runnable() {
                         @Override
                         public void run() {
-                            syncConfigToUI(builder.build());
+                            syncConfigToUI(config);
                         }
                     });
                 }
@@ -93,22 +96,13 @@ public class ApkLauncher {
         }
     }
 
-    private void changeOriginApkPath() {
-        FileDialog openApkFileDialog = new FileDialog(
-                this.shlDiagnosticLauncher, SWT.OPEN);
-        openApkFileDialog.setText("Find the original Apk");
-        openApkFileDialog.setFilterPath(System.getProperty("user.dir"));
-        String[] filterExt = {
-            "*.apk"
-        };
-        openApkFileDialog.setFilterExtensions(filterExt);
-        String originApkPath = openApkFileDialog.open();
-        if (originApkPath != null) {
-            mConfig.setOriginApkPath(originApkPath);
-            syncConfigToUI(null);
-        }
-    }
-
+    /**
+     * Helper to pick a directory
+     * @param title DirectoryDialog title
+     * @param msg DirectoryDialog message
+     * @param default_value default folder to start with
+     * @return folder path user picked
+     */
     private String pickDirectory(String title, String msg, String default_value) {
         DirectoryDialog dirPickerDialog = new DirectoryDialog(
                 this.shlDiagnosticLauncher);
@@ -118,61 +112,6 @@ public class ApkLauncher {
             dirPickerDialog.setFilterPath(default_value);
         }
         return dirPickerDialog.open();
-    }
-
-    private void changeOutdirPath() {
-        String outdirPath = pickDirectory(
-                "Pick the output dir",
-                "Select a folder for drop injected apk, various log files and screen shot images.",
-                mConfig.getOutdirPath());
-        if (outdirPath != null) {
-            mConfig.setOutdirPath(outdirPath);
-            syncConfigToUI(null);
-        }
-    }
-
-    private void changeBuildDropPath() {
-        String buildDropPath = pickDirectory(
-                "Pick the build drop dir",
-                "Select a folder either from nightly build or your aosp output folder.",
-                mConfig.getBuildDropPath());
-        if (buildDropPath != null) {
-            mConfig.setBuildDropPath(buildDropPath);
-            syncConfigToUI(null);
-        }
-    }
-
-    private void changeTakehomeScriptPath() {
-        String takehomePath = pickDirectory(
-                "Pick the take home dir",
-                "Select a folder with takehome setup scripts.",
-                mConfig.getTakehomeScriptPath());
-        if (takehomePath != null) {
-            mConfig.setTakehomeScriptPath(takehomePath);
-            syncConfigToUI(null);
-        }
-    }
-
-    private void changeSdkToolsPath() {
-        String sdkToolPath = pickDirectory(
-                "Pick the sdk tool dir",
-                "Select a folder with Project A sdk tools.",
-                mConfig.getSdkToolsPath());
-        if (sdkToolPath != null) {
-            mConfig.setSdkToolsPath(sdkToolPath);
-            syncConfigToUI(null);
-        }
-    }
-
-    private void changeInjectionScriptPath() {
-        String injectScriptPath = pickDirectory(
-                "Pick the injection path",
-                "Select a folder with injection scripts and related tools.",
-                mConfig.getInjectionScriptPath());
-        if (injectScriptPath != null) {
-            mConfig.setInjectionScriptPath(injectScriptPath);
-            syncConfigToUI(null);
-        }
     }
 
     /**
@@ -196,6 +135,9 @@ public class ApkLauncher {
         if (mConfig.hasOutdirPath()) {
             mTextOutputDir.setText(mConfig.getOutdirPath());
         }
+        mBtnProvisionVm.setSelection(mConfig.shouldProvisionVM());
+        mBtnInjectApk.setSelection(mConfig.shouldInject());
+        mBtnTakeScreenshot.setSelection(mConfig.shouldTakeSnapshot());
     }
 
     /**
@@ -234,7 +176,7 @@ public class ApkLauncher {
     protected void createContents() {
         shlDiagnosticLauncher = new Shell();
         shlDiagnosticLauncher.setMinimumSize(new Point(450, 576));
-        shlDiagnosticLauncher.setSize(450, 576);
+        shlDiagnosticLauncher.setSize(501, 620);
         shlDiagnosticLauncher.setText("Diagnostic Launcher");
         shlDiagnosticLauncher.setLayout(new GridLayout(1, false));
 
@@ -250,10 +192,22 @@ public class ApkLauncher {
                 true, false, 1, 1));
 
         Button btnOriginApk = new Button(grpInout, SWT.NONE);
-        btnOriginApk.addMouseListener(new MouseAdapter() {
-            @Override
-            public void mouseUp(MouseEvent e) {
-                changeOriginApkPath();
+        btnOriginApk.addSelectionListener(new SelectionAdapter() {
+        	@Override
+        	public void widgetSelected(SelectionEvent e) {
+                FileDialog openApkFileDialog = new FileDialog(
+                        shlDiagnosticLauncher, SWT.OPEN);
+                openApkFileDialog.setText("Find the original Apk");
+                openApkFileDialog.setFilterPath(System.getProperty("user.dir"));
+                String[] filterExt = {
+                    "*.apk"
+                };
+                openApkFileDialog.setFilterExtensions(filterExt);
+                String originApkPath = openApkFileDialog.open();
+                if (originApkPath != null) {
+                    mConfig.setOriginApkPath(originApkPath);
+                    syncConfigToUI(null);
+                }
             }
         });
         btnOriginApk.setText("Origin Apk");
@@ -263,10 +217,17 @@ public class ApkLauncher {
                 false, 1, 1));
 
         Button btnOutputDir = new Button(grpInout, SWT.NONE);
-        btnOutputDir.addMouseListener(new MouseAdapter() {
-            @Override
-            public void mouseUp(MouseEvent e) {
-                changeOutdirPath();
+        btnOutputDir.addSelectionListener(new SelectionAdapter() {
+        	@Override
+        	public void widgetSelected(SelectionEvent e) {
+                String outdirPath = pickDirectory(
+                        "Pick the output dir",
+                        "Select a folder for drop injected apk, various log files and screen shot images.",
+                        mConfig.getOutdirPath());
+                if (outdirPath != null) {
+                    mConfig.setOutdirPath(outdirPath);
+                    syncConfigToUI(null);
+                }
             }
         });
         btnOutputDir.setText("Output Dir");
@@ -317,10 +278,17 @@ public class ApkLauncher {
                 false, 1, 1));
 
         Button btnBuildFinder = new Button(composite_basic_inner, SWT.NONE);
-        btnBuildFinder.addMouseListener(new MouseAdapter() {
-            @Override
-            public void mouseUp(MouseEvent e) {
-                changeBuildDropPath();
+        btnBuildFinder.addSelectionListener(new SelectionAdapter() {
+        	@Override
+        	public void widgetSelected(SelectionEvent e) {
+                String buildDropPath = pickDirectory(
+                        "Pick the build drop dir",
+                        "Select a folder either from nightly build or your aosp output folder.",
+                        mConfig.getBuildDropPath());
+                if (buildDropPath != null) {
+                    mConfig.setBuildDropPath(buildDropPath);
+                    syncConfigToUI(null);
+                }
             }
         });
         btnBuildFinder.setLayoutData(new GridData(SWT.RIGHT, SWT.FILL, false,
@@ -370,11 +338,18 @@ public class ApkLauncher {
                 true, false, 1, 1));
 
         Button btnTakehomeScript = new Button(composite_advance_inner, SWT.NONE);
-        btnTakehomeScript.addMouseListener(new MouseAdapter() {
-            @Override
-            public void mouseUp(MouseEvent e) {
-                changeTakehomeScriptPath();
-            }
+        btnTakehomeScript.addSelectionListener(new SelectionAdapter() {
+        	@Override
+        	public void widgetSelected(SelectionEvent e) {
+                String takehomePath = pickDirectory(
+                        "Pick the take home dir",
+                        "Select a folder with takehome setup scripts.",
+                        mConfig.getTakehomeScriptPath());
+                if (takehomePath != null) {
+                    mConfig.setTakehomeScriptPath(takehomePath);
+                    syncConfigToUI(null);
+                }
+        	}
         });
         btnTakehomeScript.setLayoutData(new GridData(SWT.FILL, SWT.CENTER,
                 false, false, 1, 1));
@@ -385,10 +360,17 @@ public class ApkLauncher {
                 true, false, 1, 1));
 
         Button btnSdkTools = new Button(composite_advance_inner, SWT.NONE);
-        btnSdkTools.addMouseListener(new MouseAdapter() {
-            @Override
-            public void mouseUp(MouseEvent e) {
-                changeSdkToolsPath();
+        btnSdkTools.addSelectionListener(new SelectionAdapter() {
+        	@Override
+        	public void widgetSelected(SelectionEvent e) {
+                String sdkToolPath = pickDirectory(
+                        "Pick the sdk tool dir",
+                        "Select a folder with Project A sdk tools.",
+                        mConfig.getSdkToolsPath());
+                if (sdkToolPath != null) {
+                    mConfig.setSdkToolsPath(sdkToolPath);
+                    syncConfigToUI(null);
+                }
             }
         });
         btnSdkTools.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, false,
@@ -401,10 +383,17 @@ public class ApkLauncher {
 
         Button btnInjectionScript = new Button(composite_advance_inner,
                 SWT.NONE);
-        btnInjectionScript.addMouseListener(new MouseAdapter() {
-            @Override
-            public void mouseUp(MouseEvent e) {
-                changeInjectionScriptPath();
+        btnInjectionScript.addSelectionListener(new SelectionAdapter() {
+        	@Override
+        	public void widgetSelected(SelectionEvent e) {
+                String injectScriptPath = pickDirectory(
+                        "Pick the injection path",
+                        "Select a folder with injection scripts and related tools.",
+                        mConfig.getInjectionScriptPath());
+                if (injectScriptPath != null) {
+                    mConfig.setInjectionScriptPath(injectScriptPath);
+                    syncConfigToUI(null);
+                }
             }
         });
         btnInjectionScript.setLayoutData(new GridData(SWT.FILL, SWT.CENTER,
@@ -415,16 +404,32 @@ public class ApkLauncher {
         composite.setLayout(new RowLayout(SWT.HORIZONTAL));
         composite.setLayoutData(new GridData(SWT.FILL, SWT.FILL, false, false, 2, 1));
         
-        Button btnProvisionVm = new Button(composite, SWT.CHECK);
-        btnProvisionVm.setText("Provision VM");
+        mBtnProvisionVm = new Button(composite, SWT.CHECK);
+        mBtnProvisionVm.addSelectionListener(new SelectionAdapter() {
+        	@Override
+        	public void widgetSelected(SelectionEvent e) {
+                mConfig.setShouldProvisionVM(((Button)e.widget).getSelection());
+        	}
+        });
+        mBtnProvisionVm.setText("Provision VM");
         
-        Button btnInjectApk = new Button(composite, SWT.CHECK);
-        btnInjectApk.setSelection(true);
-        btnInjectApk.setText("Inject Apk");
+        mBtnInjectApk = new Button(composite, SWT.CHECK);
+        mBtnInjectApk.addSelectionListener(new SelectionAdapter() {
+        	@Override
+        	public void widgetSelected(SelectionEvent e) {
+                mConfig.setShouldInject(((Button)e.widget).getSelection());
+        	}
+        });
+        mBtnInjectApk.setText("Inject Apk");
         
-        Button btnTakeScreenshot = new Button(composite, SWT.CHECK);
-        btnTakeScreenshot.setSelection(true);
-        btnTakeScreenshot.setText("Take screenshot");
+        mBtnTakeScreenshot = new Button(composite, SWT.CHECK);
+        mBtnTakeScreenshot.addSelectionListener(new SelectionAdapter() {
+        	@Override
+        	public void widgetSelected(SelectionEvent e) {
+                mConfig.setShouldTakeSnapshot(((Button)e.widget).getSelection());
+        	}
+        });
+        mBtnTakeScreenshot.setText("Take screenshot");
         scrolledComposite_advance.setContent(composite_advance_inner);
         scrolledComposite_advance.setMinSize(composite_advance_inner
                 .computeSize(SWT.DEFAULT, SWT.DEFAULT));
@@ -436,9 +441,9 @@ public class ApkLauncher {
                 true, false, 1, 1));
 
         Button btnGo = new Button(composite_button_panel, SWT.CENTER);
-        btnGo.addMouseListener(new MouseAdapter() {
-            @Override
-            public void mouseUp(MouseEvent e) {
+        btnGo.addSelectionListener(new SelectionAdapter() {
+        	@Override
+        	public void widgetSelected(SelectionEvent e) {
                 ApkLaunchProgress dialog = new ApkLaunchProgress(shlDiagnosticLauncher, mConfig);
                 dialog.open();
             }

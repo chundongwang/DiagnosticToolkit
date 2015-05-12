@@ -17,7 +17,8 @@ public abstract class WorkFlowStage {
     private int CANCEL_PENDING_TIME = 500; // ms
     protected List<WorkFlowStage> mNextSteps;
     protected List<WorkFlowProgressListener> mListeners;
-    protected Thread mWorkerThread;
+    protected WorkFlowStatus mCurrentStatus;
+	protected Thread mWorkerThread;
     protected String mName;
 
     public WorkFlowStage() {
@@ -58,7 +59,7 @@ public abstract class WorkFlowStage {
      * 
      * @return
      */
-    List<WorkFlowStage> getNextSteps() {
+    public List<WorkFlowStage> getNextSteps() {
         return mNextSteps;
     }
 
@@ -80,6 +81,20 @@ public abstract class WorkFlowStage {
     public boolean removeListener(WorkFlowProgressListener listener) {
         return mListeners.remove(listener);
     }
+    
+    /**
+	 * @return the currentStatus
+	 */
+	public WorkFlowStatus getCurrentStatus() {
+		return mCurrentStatus;
+	}
+
+	/**
+	 * @param currentStatus the currentStatus to set
+	 */
+	public void setCurrentStatus(WorkFlowStatus currentStatus) {
+		mCurrentStatus = currentStatus;
+	}
 
     /**
      * Tests if the worker thread of this work is alive. A thread is alive if it has been started
@@ -107,7 +122,7 @@ public abstract class WorkFlowStage {
      * 
      * @return true if setup succeeded; false otherwise.
      */
-    public boolean setup() {
+    protected boolean setup() {
         logger.info(String.format("Worker[%s] setup done.", mName));
         return true;
     }
@@ -116,14 +131,14 @@ public abstract class WorkFlowStage {
      * Consist of post-mortem work to clean it up. This function will be executed on same thread as
      * setup/execute. Override this function to have your own logic of cleaning up.
      */
-    public void cleanup() {
+    protected void cleanup() {
         logger.info(String.format("Worker[%s] cleaned up.", mName));
     }
 
     /**
      * Override this function to execute the detailed job.
      */
-    public abstract void execute();
+    protected abstract void execute();
 
     /**
      * Start the work on a new thread.
