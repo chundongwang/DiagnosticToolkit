@@ -17,4 +17,11 @@ public interface WorkFlowProgressListener {
      * @param stage Current stage of the entire workflow
      */
     public void onCompleted(WorkFlowStage sender, WorkFlowStatus status, WorkFlowResult result);
+    
+    /**
+     * Log message to listener.
+     * @param sender Stage which is sending the message
+     * @param message Message to be logged
+     */
+    public void onLogOutput(WorkFlowStage sender, String message);
 }

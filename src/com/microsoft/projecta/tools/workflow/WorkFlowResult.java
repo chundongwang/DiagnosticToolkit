@@ -6,15 +6,15 @@ public enum WorkFlowResult {
 
     private String mReason;
 
-    boolean hasReason() {
-        return mReason == null;
+    public boolean hasReason() {
+        return mReason != null;
     }
 
-    void setReason(String reason) {
+    public void setReason(String reason) {
         mReason = reason;
     }
 
-    String getReason() {
+    public String getReason() {
         return mReason;
     }
 }

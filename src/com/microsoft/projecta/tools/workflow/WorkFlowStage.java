@@ -3,6 +3,7 @@ package com.microsoft.projecta.tools.workflow;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.logging.Level;
 import java.util.logging.Logger;
 
 /**
@@ -16,10 +17,10 @@ public abstract class WorkFlowStage {
 
     private int CANCEL_PENDING_TIME = 500; // ms
     protected List<WorkFlowStage> mNextSteps;
-    protected List<WorkFlowProgressListener> mListeners;
-    protected WorkFlowStatus mCurrentStatus;
-	protected Thread mWorkerThread;
+    private List<WorkFlowProgressListener> mListeners;
+    protected Thread mWorkerThread;
     protected String mName;
+    private boolean mCompleted;
 
     public WorkFlowStage() {
         this(null);
@@ -32,13 +33,15 @@ public abstract class WorkFlowStage {
         mWorkerThread = new Thread(new Runnable() {
             @Override
             public void run() {
-                logger.info(String.format("Worker[%s] stared.", mName));
+                logger.logp(Level.INFO, WorkFlowStage.this.getClass().getSimpleName(), "run",
+                        String.format("Worker[%s] stared.", mName));
                 if (setup()) {
                     execute();
                     cleanup();
                 }
             }
         });
+        mCompleted = false;
     }
 
     /**
@@ -68,7 +71,7 @@ public abstract class WorkFlowStage {
      * 
      * @param listener
      */
-    public void addListener(WorkFlowProgressListener listener) {
+    public synchronized void addListener(WorkFlowProgressListener listener) {
         mListeners.add(listener);
     }
 
@@ -78,23 +81,17 @@ public abstract class WorkFlowStage {
      * @param listener
      * @return true if this list contained the specified listener
      */
-    public boolean removeListener(WorkFlowProgressListener listener) {
+    public synchronized boolean removeListener(WorkFlowProgressListener listener) {
         return mListeners.remove(listener);
     }
-    
-    /**
-	 * @return the currentStatus
-	 */
-	public WorkFlowStatus getCurrentStatus() {
-		return mCurrentStatus;
-	}
 
-	/**
-	 * @param currentStatus the currentStatus to set
-	 */
-	public void setCurrentStatus(WorkFlowStatus currentStatus) {
-		mCurrentStatus = currentStatus;
-	}
+    /**
+     * Get the name of this stage.
+     * @return
+     */
+    public String getName() {
+        return mName;
+    }
 
     /**
      * Tests if the worker thread of this work is alive. A thread is alive if it has been started
@@ -107,13 +104,26 @@ public abstract class WorkFlowStage {
     }
 
     /**
+     * Interrupt the worker thread and wait for specified milliseconds.
+     * 
+     * @param mills Milliseconds to wait for worker thread to end. 0 means forever and -1 means
+     *            immediate return.
+     * @throws InterruptedException as thrown by thread.join()
+     */
+    public void cancel(int mills) throws InterruptedException {
+        mWorkerThread.interrupt();
+        if (mills >= 0) {
+            mWorkerThread.join(mills);
+        }
+    }
+
+    /**
      * Interrupt the worker thread and wait for CANCEL_PENDING_TIME milliseconds.
      * 
      * @throws InterruptedException as thrown by thread.join()
      */
     public void cancel() throws InterruptedException {
-        mWorkerThread.interrupt();
-        mWorkerThread.join(CANCEL_PENDING_TIME);
+        cancel(CANCEL_PENDING_TIME);
     }
 
     /**
@@ -123,7 +133,8 @@ public abstract class WorkFlowStage {
      * @return true if setup succeeded; false otherwise.
      */
     protected boolean setup() {
-        logger.info(String.format("Worker[%s] setup done.", mName));
+        logger.logp(Level.INFO, this.getClass().getSimpleName(), "setup",
+                String.format("Worker[%s] setup done.", mName));
         return true;
     }
 
@@ -132,7 +143,8 @@ public abstract class WorkFlowStage {
      * setup/execute. Override this function to have your own logic of cleaning up.
      */
     protected void cleanup() {
-        logger.info(String.format("Worker[%s] cleaned up.", mName));
+        logger.logp(Level.INFO, this.getClass().getSimpleName(), "cleanup",
+                String.format("Worker[%s] cleaned up.", mName));
     }
 
     /**
@@ -141,9 +153,62 @@ public abstract class WorkFlowStage {
     protected abstract void execute();
 
     /**
+     * The status represents current stage
+     * 
+     * @return The status represents current stage
+     */
+    public abstract WorkFlowStatus getStatus();
+
+    /**
      * Start the work on a new thread.
      */
     public void start() {
         mWorkerThread.start();
+    }
+
+    protected void failfast() {
+        failfast(null);
+    }
+
+    protected void failfast(String err) {
+        String msg = getClass().getSimpleName() + " failfast";
+        if (err != null) {
+            msg = msg + err;
+        }
+        logger.severe(msg);
+        throw new RuntimeException(msg);
+    }
+
+    protected void fireOnProgress(int progress) {
+        if (mCompleted) {
+            failfast("Attempt to fire onProgress after completed");
+        }
+
+        for (WorkFlowProgressListener listener : mListeners) {
+            listener.onProgress(this, getStatus(), progress);
+        }
+    }
+
+    protected void fireOnCompleted(WorkFlowResult result) {
+        if (mCompleted) {
+            failfast("Attempt to fire onCompleted multiple times");
+        }
+
+        mCompleted = true;
+        ArrayList<WorkFlowProgressListener> listenersToNotify = new ArrayList<WorkFlowProgressListener>();
+        listenersToNotify.addAll(mListeners);
+        for (WorkFlowProgressListener listener : listenersToNotify) {
+            listener.onCompleted(this, getStatus(), result);
+        }
+    }
+    
+    protected void fireOnLogOutput(String msg) {
+        if (mCompleted) {
+            failfast("Attempt to fire onLogOutput after completed");
+        }
+
+        for (WorkFlowProgressListener listener : mListeners) {
+            listener.onLogOutput(this, msg);
+        }
     }
 }
