@@ -87,6 +87,7 @@ public abstract class WorkFlowStage {
 
     /**
      * Get the name of this stage.
+     * 
      * @return
      */
     public String getName() {
@@ -201,7 +202,7 @@ public abstract class WorkFlowStage {
             listener.onCompleted(this, getStatus(), result);
         }
     }
-    
+
     protected void fireOnLogOutput(String msg) {
         if (mCompleted) {
             failfast("Attempt to fire onLogOutput after completed");

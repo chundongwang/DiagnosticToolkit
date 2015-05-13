@@ -3,16 +3,18 @@ package com.microsoft.projecta.tools.ui;
 
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.custom.ScrolledComposite;
-import org.eclipse.swt.events.MouseAdapter;
-import org.eclipse.swt.events.MouseEvent;
+import org.eclipse.swt.events.KeyAdapter;
+import org.eclipse.swt.events.KeyEvent;
 import org.eclipse.swt.events.SelectionAdapter;
 import org.eclipse.swt.events.SelectionEvent;
+import org.eclipse.swt.graphics.Point;
 import org.eclipse.swt.layout.FillLayout;
 import org.eclipse.swt.layout.FormAttachment;
 import org.eclipse.swt.layout.FormData;
 import org.eclipse.swt.layout.FormLayout;
 import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.layout.GridLayout;
+import org.eclipse.swt.layout.RowLayout;
 import org.eclipse.swt.widgets.Button;
 import org.eclipse.swt.widgets.Combo;
 import org.eclipse.swt.widgets.Composite;
@@ -29,12 +31,6 @@ import org.eclipse.wb.swt.SWTResourceManager;
 
 import com.microsoft.projecta.tools.Branch;
 import com.microsoft.projecta.tools.LaunchConfig;
-import org.eclipse.swt.widgets.Label;
-import swing2swt.layout.FlowLayout;
-import org.eclipse.swt.layout.RowLayout;
-import org.eclipse.swt.graphics.Point;
-import org.eclipse.swt.events.KeyAdapter;
-import org.eclipse.swt.events.KeyEvent;
 
 public class LauncherWindow {
 
@@ -102,6 +98,7 @@ public class LauncherWindow {
 
     /**
      * Helper to pick a directory
+     * 
      * @param title DirectoryDialog title
      * @param msg DirectoryDialog message
      * @param default_value default folder to start with
@@ -143,7 +140,7 @@ public class LauncherWindow {
         mBtnProvisionVm.setSelection(mConfig.shouldProvisionVM());
         mBtnInjectApk.setSelection(mConfig.shouldInject());
         mBtnTakeScreenshot.setSelection(mConfig.shouldTakeSnapshot());
-        
+
         if (mConfig.hasOriginApkPath() && mConfig.hasOutdirPath()) {
             mBtnGo.setEnabled(true);
         }
@@ -202,14 +199,14 @@ public class LauncherWindow {
 
         Button btnOriginApk = new Button(grpInout, SWT.NONE);
         btnOriginApk.addSelectionListener(new SelectionAdapter() {
-        	@Override
-        	public void widgetSelected(SelectionEvent e) {
+            @Override
+            public void widgetSelected(SelectionEvent e) {
                 FileDialog openApkFileDialog = new FileDialog(
                         shlDiagnosticLauncher, SWT.OPEN);
                 openApkFileDialog.setText("Find the original Apk");
                 openApkFileDialog.setFilterPath(System.getProperty("user.dir"));
                 String[] filterExt = {
-                    "*.apk"
+                        "*.apk"
                 };
                 openApkFileDialog.setFilterExtensions(filterExt);
                 String originApkPath = openApkFileDialog.open();
@@ -227,8 +224,8 @@ public class LauncherWindow {
 
         Button btnOutputDir = new Button(grpInout, SWT.NONE);
         btnOutputDir.addSelectionListener(new SelectionAdapter() {
-        	@Override
-        	public void widgetSelected(SelectionEvent e) {
+            @Override
+            public void widgetSelected(SelectionEvent e) {
                 String outdirPath = pickDirectory(
                         "Pick the output dir",
                         "Select a folder for drop injected apk, various log files and screen shot images.",
@@ -288,8 +285,8 @@ public class LauncherWindow {
 
         Button btnBuildFinder = new Button(composite_basic_inner, SWT.NONE);
         btnBuildFinder.addSelectionListener(new SelectionAdapter() {
-        	@Override
-        	public void widgetSelected(SelectionEvent e) {
+            @Override
+            public void widgetSelected(SelectionEvent e) {
                 String buildDropPath = pickDirectory(
                         "Pick the build drop dir",
                         "Select a folder either from nightly build or your aosp output folder.",
@@ -317,21 +314,21 @@ public class LauncherWindow {
 
         mComboDevice = new Combo(composite_basic_inner, SWT.BORDER);
         mComboDevice.addKeyListener(new KeyAdapter() {
-        	@Override
-        	public void keyReleased(KeyEvent e) {
+            @Override
+            public void keyReleased(KeyEvent e) {
                 mConfig.setDeviceIPAddr(mComboDevice.getText());
                 syncConfigToUI(null);
-        	}
+            }
         });
         mComboDevice.addSelectionListener(new SelectionAdapter() {
-        	@Override
-        	public void widgetSelected(SelectionEvent e) {
+            @Override
+            public void widgetSelected(SelectionEvent e) {
                 mConfig.setDeviceIPAddr(mComboDevice.getText());
                 syncConfigToUI(null);
-        	}
+            }
         });
         mComboDevice.setItems(new String[] {
-            "127.0.0.1"
+                "127.0.0.1"
         });
         mComboDevice.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, false,
                 2, 1));
@@ -362,8 +359,8 @@ public class LauncherWindow {
 
         Button btnTakehomeScript = new Button(composite_advance_inner, SWT.NONE);
         btnTakehomeScript.addSelectionListener(new SelectionAdapter() {
-        	@Override
-        	public void widgetSelected(SelectionEvent e) {
+            @Override
+            public void widgetSelected(SelectionEvent e) {
                 String takehomePath = pickDirectory(
                         "Pick the take home dir",
                         "Select a folder with takehome setup scripts.",
@@ -372,7 +369,7 @@ public class LauncherWindow {
                     mConfig.setTakehomeScriptPath(takehomePath);
                     syncConfigToUI(null);
                 }
-        	}
+            }
         });
         btnTakehomeScript.setLayoutData(new GridData(SWT.FILL, SWT.CENTER,
                 false, false, 1, 1));
@@ -384,8 +381,8 @@ public class LauncherWindow {
 
         Button btnSdkTools = new Button(composite_advance_inner, SWT.NONE);
         btnSdkTools.addSelectionListener(new SelectionAdapter() {
-        	@Override
-        	public void widgetSelected(SelectionEvent e) {
+            @Override
+            public void widgetSelected(SelectionEvent e) {
                 String sdkToolPath = pickDirectory(
                         "Pick the sdk tool dir",
                         "Select a folder with Project A sdk tools.",
@@ -407,8 +404,8 @@ public class LauncherWindow {
         Button btnInjectionScript = new Button(composite_advance_inner,
                 SWT.NONE);
         btnInjectionScript.addSelectionListener(new SelectionAdapter() {
-        	@Override
-        	public void widgetSelected(SelectionEvent e) {
+            @Override
+            public void widgetSelected(SelectionEvent e) {
                 String injectScriptPath = pickDirectory(
                         "Pick the injection path",
                         "Select a folder with injection scripts and related tools.",
@@ -422,35 +419,36 @@ public class LauncherWindow {
         btnInjectionScript.setLayoutData(new GridData(SWT.FILL, SWT.CENTER,
                 false, false, 1, 1));
         btnInjectionScript.setText("Injection Script");
-        
+
         Composite composite = new Composite(composite_advance_inner, SWT.NONE);
         composite.setLayout(new RowLayout(SWT.HORIZONTAL));
         composite.setLayoutData(new GridData(SWT.FILL, SWT.FILL, false, false, 2, 1));
-        
+
         mBtnProvisionVm = new Button(composite, SWT.CHECK);
+        mBtnProvisionVm.setEnabled(false);
         mBtnProvisionVm.addSelectionListener(new SelectionAdapter() {
-        	@Override
-        	public void widgetSelected(SelectionEvent e) {
-                mConfig.setShouldProvisionVM(((Button)e.widget).getSelection());
-        	}
+            @Override
+            public void widgetSelected(SelectionEvent e) {
+                mConfig.setShouldProvisionVM(((Button) e.widget).getSelection());
+            }
         });
         mBtnProvisionVm.setText("Provision VM");
-        
+
         mBtnInjectApk = new Button(composite, SWT.CHECK);
         mBtnInjectApk.addSelectionListener(new SelectionAdapter() {
-        	@Override
-        	public void widgetSelected(SelectionEvent e) {
-                mConfig.setShouldInject(((Button)e.widget).getSelection());
-        	}
+            @Override
+            public void widgetSelected(SelectionEvent e) {
+                mConfig.setShouldInject(((Button) e.widget).getSelection());
+            }
         });
         mBtnInjectApk.setText("Inject Apk");
-        
+
         mBtnTakeScreenshot = new Button(composite, SWT.CHECK);
         mBtnTakeScreenshot.addSelectionListener(new SelectionAdapter() {
-        	@Override
-        	public void widgetSelected(SelectionEvent e) {
-                mConfig.setShouldTakeSnapshot(((Button)e.widget).getSelection());
-        	}
+            @Override
+            public void widgetSelected(SelectionEvent e) {
+                mConfig.setShouldTakeSnapshot(((Button) e.widget).getSelection());
+            }
         });
         mBtnTakeScreenshot.setText("Take screenshot");
         scrolledComposite_advance.setContent(composite_advance_inner);
@@ -466,9 +464,10 @@ public class LauncherWindow {
         mBtnGo = new Button(composite_button_panel, SWT.CENTER);
         mBtnGo.setEnabled(false);
         mBtnGo.addSelectionListener(new SelectionAdapter() {
-        	@Override
-        	public void widgetSelected(SelectionEvent e) {
-                LaunchProgressDialog dialog = new LaunchProgressDialog(shlDiagnosticLauncher, mConfig);
+            @Override
+            public void widgetSelected(SelectionEvent e) {
+                LaunchProgressDialog dialog = new LaunchProgressDialog(shlDiagnosticLauncher,
+                        mConfig);
                 dialog.open();
             }
         });

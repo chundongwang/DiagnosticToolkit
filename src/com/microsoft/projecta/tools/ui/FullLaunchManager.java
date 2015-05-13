@@ -1,3 +1,4 @@
+
 package com.microsoft.projecta.tools.ui;
 
 import java.lang.reflect.Constructor;
@@ -19,237 +20,221 @@ import com.microsoft.projecta.tools.workflow.WorkFlowStage;
 import com.microsoft.projecta.tools.workflow.WorkFlowStatus;
 
 public final class FullLaunchManager implements WorkFlowProgressListener {
-	private static Logger logger = Logger.getLogger(FullLaunchManager.class
-			.getSimpleName());
+    private static Logger logger = Logger.getLogger(FullLaunchManager.class
+            .getSimpleName());
 
-	private LaunchConfig mConfig;
-	private WorkFlowProgressListener mListener;
-	private List<WorkFlowStage> mCurrentStages;
-	private int mTotalStages;
-	private boolean mCancelled;
-	private boolean mStopped;
+    private LaunchConfig mConfig;
+    private WorkFlowProgressListener mListener;
+    private List<WorkFlowStage> mCurrentStages;
+    private int mTotalStages;
+    private boolean mCancelled;
+    private boolean mStopped;
 
-	public FullLaunchManager(LaunchConfig config,
-			WorkFlowProgressListener listener) {
-		mConfig = config;
-		mListener = listener;
-		mCurrentStages = new ArrayList<WorkFlowStage>();
-		mTotalStages = 0;
-		mCancelled = false;
-		mStopped = false;
-	}
+    public FullLaunchManager(LaunchConfig config,
+            WorkFlowProgressListener listener) {
+        mConfig = config;
+        mListener = listener;
+        mCurrentStages = new ArrayList<WorkFlowStage>();
+        mTotalStages = 0;
+        mCancelled = false;
+        mStopped = false;
+    }
 
-	public int getTotalStages() {
-		return mTotalStages;
-	}
+    public int getTotalStages() {
+        return mTotalStages;
+    }
 
-	/**
-	 * @return the currentStage
-	 */
-	public synchronized List<WorkFlowStage> getCurrentStages() {
-		return mCurrentStages;
-	}
+    /**
+     * @return the currentStage
+     */
+    public synchronized List<WorkFlowStage> getCurrentStages() {
+        return mCurrentStages;
+    }
 
-	/**
-	 * @param currentStage
-	 *            the currentStage to remove
-	 */
-	public synchronized void removeCurrentStage(WorkFlowStage currentStage) {
-		mCurrentStages.remove(currentStage);
-	}
+    /**
+     * @param currentStage the currentStage to remove
+     */
+    public synchronized void removeCurrentStage(WorkFlowStage currentStage) {
+        mCurrentStages.remove(currentStage);
+    }
 
-	/**
-	 * @param currentStage
-	 *            the currentStage to add
-	 */
-	public synchronized void addCurrentStage(WorkFlowStage currentStage) {
-		mCurrentStages.add(currentStage);
-	}
+    /**
+     * @param currentStage the currentStage to add
+     */
+    public synchronized void addCurrentStage(WorkFlowStage currentStage) {
+        mCurrentStages.add(currentStage);
+    }
 
-	/**
-	 * @return the cancelled
-	 */
-	public synchronized boolean isCancelled() {
-		return mCancelled;
-	}
+    /**
+     * @return the cancelled
+     */
+    public synchronized boolean isCancelled() {
+        return mCancelled;
+    }
 
-	/**
-	 * @param cancelled
-	 *            the cancelled to set
-	 */
-	public synchronized void setCancelled(boolean cancelled) {
-		mCancelled = cancelled;
-	}
+    /**
+     * @param cancelled the cancelled to set
+     */
+    public synchronized void setCancelled(boolean cancelled) {
+        mCancelled = cancelled;
+    }
 
-	/**
-	 * @return the stopped
-	 */
-	public synchronized boolean isStopped() {
-		return mStopped;
-	}
+    /**
+     * @return the stopped
+     */
+    public synchronized boolean isStopped() {
+        return mStopped;
+    }
 
-	/**
-	 * @param stopped
-	 *            the stopped to set
-	 */
-	public synchronized void setStopped(boolean stopped) {
-		mStopped = stopped;
-	}
+    /**
+     * @param stopped the stopped to set
+     */
+    public synchronized void setStopped(boolean stopped) {
+        mStopped = stopped;
+    }
 
-	/**
-	 * Detect if this stage should run.
-	 * 
-	 * @param k
-	 *            Should be subclass of WorkFlowStage
-	 * @param config
-	 *            LaunchConfig of this run
-	 * @return true if both k is subclass of WorkFlowStage and config allows it
-	 *         to run.
-	 */
-	private static boolean shouldRun(Class<?> k, LaunchConfig config) {
-		if (k == ProvisionVM.class) {
-			return config.shouldProvisionVM();
-		} else if (k == ApkInjection.class) {
-			return config.shouldInject();
-		} else if (WorkFlowStage.class.isAssignableFrom(k)) {
-			return true;
-		}
-		Class<?> p = k.getSuperclass();
-		return false;
-	}
+    /**
+     * Detect if this stage should run.
+     * 
+     * @param k Should be subclass of WorkFlowStage
+     * @param config LaunchConfig of this run
+     * @return true if both k is subclass of WorkFlowStage and config allows it to run.
+     */
+    private static boolean shouldRun(Class<?> k, LaunchConfig config) {
+        if (k == ProvisionVM.class) {
+            return config.shouldProvisionVM();
+        } else if (k == ApkInjection.class) {
+            return config.shouldInject();
+        } else if (WorkFlowStage.class.isAssignableFrom(k)) {
+            return true;
+        }
+        return false;
+    }
 
-	private static void failfast(Throwable e) {
-		String msg = "FullLaunchManager failfast with " + e.getMessage();
-		logger.severe(msg);
-		throw new RuntimeException(msg, e);
-	}
+    private static void failfast(Throwable e) {
+        String msg = "FullLaunchManager failfast with " + e.getMessage();
+        logger.severe(msg);
+        throw new RuntimeException(msg, e);
+    }
 
-	/**
-	 * Build the chain of actions for launch workflow. Will need to be updated
-	 * each time we add steps to the picture.
-	 * 
-	 * @param config
-	 *            LaunchConfig of this launch
-	 * @return WorkFlowStage to start with
-	 */
-	@SuppressWarnings("rawtypes")
-	private WorkFlowStage buildStages() {
-		WorkFlowStage stageStart = null;
-		WorkFlowStage stageCurrent = null;
-		WorkFlowStage stage = null;
+    /**
+     * Build the chain of actions for launch workflow. Will need to be updated each time we add
+     * steps to the picture.
+     * 
+     * @param config LaunchConfig of this launch
+     * @return WorkFlowStage to start with
+     */
+    @SuppressWarnings("rawtypes")
+    private WorkFlowStage buildStages() {
+        WorkFlowStage stageStart = null;
+        WorkFlowStage stageCurrent = null;
+        WorkFlowStage stage = null;
 
-		// 1. Provision VM
-		// 2. Inject GP-Interop
-		// 3. Device connection
-		// 4. App installation (logcat)
-		// 5. App launch (logcat, snapshot)
-		// 6. Kill the app
-		Class[] steps = { ProvisionVM.class, ApkInjection.class,
-				DeviceConnection.class, ApkInstaller.class, ApkLauncher.class,
-				ApkKiller.class };
-		mTotalStages = 0;
-		for (Class<?> k : steps) {
-			if (shouldRun(k, mConfig)) {
-				Constructor ctor;
-				try {
-					ctor = k.getConstructor(LaunchConfig.class);
-					stage = (WorkFlowStage) ctor.newInstance(mConfig);
-					if (stageCurrent != null) {
-						stageCurrent.addNextStep(stage);
-					}
-					stageCurrent = stage;
-					mTotalStages++;
-					if (stageStart == null) {
-						stageStart = stageCurrent;
-					}
-				} catch (NoSuchMethodException e) {
-					failfast(e);
-				} catch (SecurityException e) {
-					failfast(e);
-				} catch (InstantiationException e) {
-					failfast(e);
-				} catch (IllegalAccessException e) {
-					failfast(e);
-				} catch (IllegalArgumentException e) {
-					failfast(e);
-				} catch (InvocationTargetException e) {
-					failfast(e);
-				}
-			}
-		}
+        // 1. Provision VM
+        // 2. Inject GP-Interop
+        // 3. Device connection
+        // 4. App installation (logcat)
+        // 5. App launch (logcat, snapshot)
+        // 6. Kill the app
+        Class[] steps = {
+                ProvisionVM.class, ApkInjection.class,
+                DeviceConnection.class, ApkInstaller.class, ApkLauncher.class,
+                ApkKiller.class
+        };
+        mTotalStages = 0;
+        for (Class<?> k : steps) {
+            if (shouldRun(k, mConfig)) {
+                Constructor ctor;
+                try {
+                    ctor = k.getConstructor(LaunchConfig.class);
+                    stage = (WorkFlowStage) ctor.newInstance(mConfig);
+                    if (stageCurrent != null) {
+                        stageCurrent.addNextStep(stage);
+                    }
+                    stageCurrent = stage;
+                    mTotalStages++;
+                    if (stageStart == null) {
+                        stageStart = stageCurrent;
+                    }
+                } catch (NoSuchMethodException | SecurityException | InstantiationException
+                        | IllegalAccessException | IllegalArgumentException
+                        | InvocationTargetException e) {
+                    failfast(e);
+                }
+            }
+        }
 
-		return stageStart;
-	}
+        return stageStart;
+    }
 
-	/**
-	 * Execute specified stage and register this as the listener with it.
-	 * 
-	 * @param stageStart
-	 *            Stage to be started.
-	 */
-	private void executeStage(WorkFlowStage stageStart) {
-		addCurrentStage(stageStart);
-		stageStart.addListener(this);
-		stageStart.start();
-	}
+    /**
+     * Execute specified stage and register this as the listener with it.
+     * 
+     * @param stageStart Stage to be started.
+     */
+    private void executeStage(WorkFlowStage stageStart) {
+        addCurrentStage(stageStart);
+        stageStart.addListener(this);
+        stageStart.start();
+    }
 
-	/**
-	 * Build the chain of actions and kick off.
-	 */
-	public void launch() {
-		setStopped(false);
-		new Thread(new Runnable() {
-			@Override
-			public void run() {
-				executeStage(buildStages());
-			}
-		}).start();
-	}
+    /**
+     * Build the chain of actions and kick off.
+     */
+    public void launch() {
+        setStopped(false);
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                executeStage(buildStages());
+            }
+        }).start();
+    }
 
-	/**
-	 * cancel current train.
-	 * 
-	 * @throws InterruptedException
-	 */
-	public void cancel() {
-		if (!isStopped() && !isCancelled()) {
-			setCancelled(true);
-			ArrayList<WorkFlowStage> stages = new ArrayList<WorkFlowStage>();
-			stages.addAll(getCurrentStages());
-			for (WorkFlowStage stage : stages) {
-				try {
-					stage.cancel(-1);
-				} catch (InterruptedException e) {
-					logger.warning("Unexpected InterruptedException while cancelling. ");
-				}
-			}
-		}
-	}
+    /**
+     * cancel current train.
+     * 
+     * @throws InterruptedException
+     */
+    public void cancel() {
+        if (!isStopped() && !isCancelled()) {
+            setCancelled(true);
+            ArrayList<WorkFlowStage> stages = new ArrayList<WorkFlowStage>();
+            stages.addAll(getCurrentStages());
+            for (WorkFlowStage stage : stages) {
+                try {
+                    stage.cancel(-1);
+                } catch (InterruptedException e) {
+                    logger.warning("Unexpected InterruptedException while cancelling. ");
+                }
+            }
+        }
+    }
 
-	@Override
-	public void onProgress(WorkFlowStage sender, WorkFlowStatus status,
-			int progress) {
-		mListener.onProgress(sender, status, progress);
-	}
+    @Override
+    public void onProgress(WorkFlowStage sender, WorkFlowStatus status,
+            int progress) {
+        mListener.onProgress(sender, status, progress);
+    }
 
-	@Override
-	public void onCompleted(WorkFlowStage sender, WorkFlowStatus status,
-			WorkFlowResult result) {
-		mListener.onCompleted(sender, status, result);
-		sender.removeListener(this);
+    @Override
+    public void onCompleted(WorkFlowStage sender, WorkFlowStatus status,
+            WorkFlowResult result) {
+        mListener.onCompleted(sender, status, result);
+        sender.removeListener(this);
 
-		if (result == WorkFlowResult.SUCCESS && !isCancelled()) {
-			List<WorkFlowStage> nextStages = sender.getNextSteps();
-			for (WorkFlowStage nextStage : nextStages) {
-				executeStage(nextStage);
-			}
-		} else {
-			setStopped(true);
-		}
-	}
+        if (result == WorkFlowResult.SUCCESS && !isCancelled()) {
+            List<WorkFlowStage> nextStages = sender.getNextSteps();
+            for (WorkFlowStage nextStage : nextStages) {
+                executeStage(nextStage);
+            }
+        } else {
+            setStopped(true);
+        }
+    }
 
-	@Override
-	public void onLogOutput(WorkFlowStage sender, String message) {
-		mListener.onLogOutput(sender, message);
-	}
+    @Override
+    public void onLogOutput(WorkFlowStage sender, String message) {
+        mListener.onLogOutput(sender, message);
+    }
 }

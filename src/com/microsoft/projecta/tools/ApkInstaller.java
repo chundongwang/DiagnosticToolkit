@@ -6,8 +6,6 @@ import java.io.IOException;
 import java.util.logging.Logger;
 
 import com.microsoft.projecta.tools.workflow.WorkFlowOutOfProcStage;
-import com.microsoft.projecta.tools.workflow.WorkFlowResult;
-import com.microsoft.projecta.tools.workflow.WorkFlowStage;
 import com.microsoft.projecta.tools.workflow.WorkFlowStatus;
 
 public final class ApkInstaller extends WorkFlowOutOfProcStage {
@@ -20,15 +18,18 @@ public final class ApkInstaller extends WorkFlowOutOfProcStage {
         mConfig = config;
     }
 
-	@Override
-	protected Process startWorkerProcess() throws IOException {
-		return new ProcessBuilder()
-				.command(mConfig.getSdkToolsPath() + "\\SDK_19.1.0\\platform-tools\\adb.exe",
-						"install",
-						mConfig.getOriginApkPath())
-				.directory(new File(mConfig.getOutdirPath()))
-				.redirectErrorStream(true).start();
-	}
+    /**
+     * adb install <origin_apk>
+     */
+    @Override
+    protected ProcessBuilder startWorkerProcess() throws IOException {
+        // TODO install injected apk
+        return new ProcessBuilder()
+                .command(mConfig.getSdkToolsPath() + "\\SDK_19.1.0\\platform-tools\\adb.exe",
+                        "install",
+                        mConfig.getOriginApkPath())
+                .directory(new File(mConfig.getOutdirPath()));
+    }
 
     @Override
     public WorkFlowStatus getStatus() {

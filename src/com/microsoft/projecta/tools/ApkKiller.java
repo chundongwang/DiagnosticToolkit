@@ -1,34 +1,33 @@
 
 package com.microsoft.projecta.tools;
 
+import java.io.File;
+import java.io.IOException;
 import java.util.logging.Logger;
 
-import com.microsoft.projecta.tools.workflow.WorkFlowResult;
-import com.microsoft.projecta.tools.workflow.WorkFlowStage;
+import com.microsoft.projecta.tools.workflow.WorkFlowOutOfProcStage;
 import com.microsoft.projecta.tools.workflow.WorkFlowStatus;
 
-public class ApkKiller extends WorkFlowStage {
+public class ApkKiller extends WorkFlowOutOfProcStage {
     private static Logger logger = Logger.getLogger(ApkKiller.class
             .getSimpleName());
     private LaunchConfig mConfig;
 
     public ApkKiller(LaunchConfig config) {
-        super(logger.getName());
+        super(logger.getName(), "adb process to kill the apk");
         mConfig = config;
     }
 
+    /**
+     * adb shell am kill <package_name>
+     */
     @Override
-    public void execute() {
-        // TODO pseudo execution
-        try {
-            for (int i = 0; i < 10; i++) {
-                fireOnProgress(i * 10);
-                Thread.sleep(100);
-            }
-        } catch (InterruptedException e) {
-            logger.severe(e.toString());
-        }
-        fireOnCompleted(WorkFlowResult.SUCCESS);
+    protected ProcessBuilder startWorkerProcess() throws IOException {
+        return new ProcessBuilder()
+                .command(mConfig.getSdkToolsPath() + "\\SDK_19.1.0\\platform-tools\\adb.exe",
+                        "install",
+                        mConfig.getOriginApkPath())
+                .directory(new File(mConfig.getOutdirPath()));
     }
 
     @Override
