@@ -1,5 +1,5 @@
 
-package com.microsoft.projecta.tools.ui;
+package com.microsoft.projecta.tools;
 
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
@@ -12,8 +12,8 @@ import com.microsoft.projecta.tools.ApkInstaller;
 import com.microsoft.projecta.tools.ApkKiller;
 import com.microsoft.projecta.tools.ApkLauncher;
 import com.microsoft.projecta.tools.DeviceConnection;
-import com.microsoft.projecta.tools.LaunchConfig;
 import com.microsoft.projecta.tools.ProvisionVM;
+import com.microsoft.projecta.tools.config.LaunchConfig;
 import com.microsoft.projecta.tools.workflow.WorkFlowProgressListener;
 import com.microsoft.projecta.tools.workflow.WorkFlowResult;
 import com.microsoft.projecta.tools.workflow.WorkFlowStage;

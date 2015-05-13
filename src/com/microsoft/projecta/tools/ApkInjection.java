@@ -1,10 +1,12 @@
-
 package com.microsoft.projecta.tools;
+
+
 
 import java.io.File;
 import java.io.IOException;
 import java.util.logging.Logger;
 
+import com.microsoft.projecta.tools.config.LaunchConfig;
 import com.microsoft.projecta.tools.workflow.WorkFlowOutOfProcStage;
 import com.microsoft.projecta.tools.workflow.WorkFlowStatus;
 
@@ -27,8 +29,8 @@ public final class ApkInjection extends WorkFlowOutOfProcStage {
                 .command(
                         "lib\\jython.bat",
                         mConfig.getInjectionScriptPath() + "\\AutoInjection.py",
-                        "--builddrop", mConfig.getBuildDropPath() + "\\inject",
-                        "--output", mConfig.getOutdirPath(),
+                        "--builddrop", mConfig.getBuildDropPath(),
+                        "--output", mConfig.getOutdirPath() + "\\inject",
                         mConfig.getOriginApkPath())
                 .directory(new File(mConfig.getOutdirPath()));
     }

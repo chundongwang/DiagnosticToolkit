@@ -1,5 +1,7 @@
+package com.microsoft.projecta.tools.config;
 
-package com.microsoft.projecta.tools;
+
+
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -18,6 +20,8 @@ public final class LaunchConfig {
     private String mDeviceIPAddr;
     private String mOriginApkPath;
     private String mOutdirPath;
+    
+    private String mInjectedApkPath;
 
     private boolean mShouldProvisionVM;
     private boolean mShouldInject;
@@ -183,6 +187,20 @@ public final class LaunchConfig {
         mDeviceIPAddr = deviceIPAddr;
     }
 
+    /**
+     * @return the injectedApkPath
+     */
+    public String getInjectedApkPath() {
+        return mInjectedApkPath;
+    }
+
+    /**
+     * @param injectedApkPath the injectedApkPath to set
+     */
+    public void setInjectedApkPath(String injectedApkPath) {
+        this.mInjectedApkPath = injectedApkPath;
+    }
+
     public String toString() {
         StringBuilder builder = new StringBuilder();
         builder.append(String.format("Build Drop Path=%s", mBuildDropPath));
@@ -202,13 +220,13 @@ public final class LaunchConfig {
         builder.append('\n');
         builder.append(String.format("Output Dir Path=%s", mOutdirPath));
         builder.append('\n');
-        builder.append(String.format("Should Provision VM?",
+        builder.append(String.format("Should Provision VM? %s",
                 String.valueOf(mShouldProvisionVM)));
         builder.append('\n');
-        builder.append(String.format("Should Inject?",
+        builder.append(String.format("Should Inject? %s",
                 String.valueOf(mShouldInject)));
         builder.append('\n');
-        builder.append(String.format("Should Take Snapshot?",
+        builder.append(String.format("Should Take Snapshot? %s",
                 String.valueOf(mShouldTakeSnapshot)));
         return builder.toString();
     }

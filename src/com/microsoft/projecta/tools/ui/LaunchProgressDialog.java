@@ -21,7 +21,8 @@ import org.eclipse.swt.widgets.Text;
 
 import swing2swt.layout.FlowLayout;
 
-import com.microsoft.projecta.tools.LaunchConfig;
+import com.microsoft.projecta.tools.FullLaunchManager;
+import com.microsoft.projecta.tools.config.LaunchConfig;
 import com.microsoft.projecta.tools.workflow.WorkFlowProgressListener;
 import com.microsoft.projecta.tools.workflow.WorkFlowResult;
 import com.microsoft.projecta.tools.workflow.WorkFlowStage;

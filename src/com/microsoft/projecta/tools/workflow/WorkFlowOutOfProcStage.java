@@ -1,5 +1,6 @@
-
 package com.microsoft.projecta.tools.workflow;
+
+
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -7,10 +8,8 @@ import java.io.InputStreamReader;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-import com.microsoft.projecta.tools.ApkInjection;
-
 public abstract class WorkFlowOutOfProcStage extends WorkFlowStage {
-    private static Logger logger = Logger.getLogger(ApkInjection.class.getSimpleName());
+    private static Logger logger = Logger.getLogger(WorkFlowOutOfProcStage.class.getSimpleName());
 
     private String mWorkerProcDesc;
     private Process mWorkerProc;

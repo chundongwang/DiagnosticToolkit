@@ -29,8 +29,8 @@ import org.eclipse.swt.widgets.TabItem;
 import org.eclipse.swt.widgets.Text;
 import org.eclipse.wb.swt.SWTResourceManager;
 
-import com.microsoft.projecta.tools.Branch;
-import com.microsoft.projecta.tools.LaunchConfig;
+import com.microsoft.projecta.tools.config.Branch;
+import com.microsoft.projecta.tools.config.LaunchConfig;
 
 public class LauncherWindow {
 
