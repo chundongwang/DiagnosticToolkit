@@ -1,37 +1,34 @@
 
 package com.microsoft.projecta.tools;
 
+import java.io.File;
+import java.io.IOException;
 import java.util.logging.Logger;
 
+import com.microsoft.projecta.tools.workflow.WorkFlowOutOfProcStage;
 import com.microsoft.projecta.tools.workflow.WorkFlowResult;
 import com.microsoft.projecta.tools.workflow.WorkFlowStage;
 import com.microsoft.projecta.tools.workflow.WorkFlowStatus;
 
-public final class ApkInstaller extends WorkFlowStage {
+public final class ApkInstaller extends WorkFlowOutOfProcStage {
     private static Logger logger = Logger.getLogger(ApkInstaller.class
             .getSimpleName());
     private LaunchConfig mConfig;
 
     public ApkInstaller(LaunchConfig config) {
-        super(logger.getName());
+        super(logger.getName(), "adb process to install apk");
         mConfig = config;
     }
 
-    @Override
-    public void execute() {
-        // TODO pseudo execution
-        int i = 0;
-        try {
-            for (; i < 10; i++) {
-                fireOnProgress(i * 10);
-                fireOnLogOutput("Loading "+i);
-                Thread.sleep(100);
-            }
-        } catch (InterruptedException e) {
-            logger.severe(e.toString());
-        }
-        fireOnCompleted(i>=9?WorkFlowResult.SUCCESS:WorkFlowResult.CANCELLED);
-    }
+	@Override
+	protected Process startWorkerProcess() throws IOException {
+		return new ProcessBuilder()
+				.command(mConfig.getSdkToolsPath() + "\\SDK_19.1.0\\platform-tools\\adb.exe",
+						"install",
+						mConfig.getOriginApkPath())
+				.directory(new File(mConfig.getOutdirPath()))
+				.redirectErrorStream(true).start();
+	}
 
     @Override
     public WorkFlowStatus getStatus() {

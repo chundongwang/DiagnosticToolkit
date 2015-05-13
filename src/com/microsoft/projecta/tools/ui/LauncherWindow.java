@@ -33,6 +33,8 @@ import org.eclipse.swt.widgets.Label;
 import swing2swt.layout.FlowLayout;
 import org.eclipse.swt.layout.RowLayout;
 import org.eclipse.swt.graphics.Point;
+import org.eclipse.swt.events.KeyAdapter;
+import org.eclipse.swt.events.KeyEvent;
 
 public class LauncherWindow {
 
@@ -47,6 +49,7 @@ public class LauncherWindow {
     private Text mTextTakehomePath;
     private Text mTextSdkToolsPath;
     private Text mTextInjectionScriptPath;
+    private Combo mComboDevice;
     private Button mBtnProvisionVm;
     private Button mBtnInjectApk;
     private Button mBtnTakeScreenshot;
@@ -130,6 +133,7 @@ public class LauncherWindow {
         mTextTakehomePath.setText(mConfig.getTakehomeScriptPath());
         mTextSdkToolsPath.setText(mConfig.getSdkToolsPath());
         mTextInjectionScriptPath.setText(mConfig.getInjectionScriptPath());
+        mComboDevice.setText(mConfig.getDeviceIPAddr());
         if (mConfig.hasOriginApkPath()) {
             mTextOriginApkPath.setText(mConfig.getOriginApkPath());
         }
@@ -311,13 +315,27 @@ public class LauncherWindow {
         comboFlavor.setItems(flavorItems);
         comboFlavor.select(0);
 
-        Combo comboDevice = new Combo(composite_basic_inner, SWT.BORDER);
-        comboDevice.setItems(new String[] {
+        mComboDevice = new Combo(composite_basic_inner, SWT.BORDER);
+        mComboDevice.addKeyListener(new KeyAdapter() {
+        	@Override
+        	public void keyReleased(KeyEvent e) {
+                mConfig.setDeviceIPAddr(mComboDevice.getText());
+                syncConfigToUI(null);
+        	}
+        });
+        mComboDevice.addSelectionListener(new SelectionAdapter() {
+        	@Override
+        	public void widgetSelected(SelectionEvent e) {
+                mConfig.setDeviceIPAddr(mComboDevice.getText());
+                syncConfigToUI(null);
+        	}
+        });
+        mComboDevice.setItems(new String[] {
             "127.0.0.1"
         });
-        comboDevice.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, false,
+        mComboDevice.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, false,
                 2, 1));
-        comboDevice.select(0);
+        mComboDevice.select(0);
         scrolledComposite_basic.setContent(composite_basic_inner);
         scrolledComposite_basic.setMinSize(composite_basic_inner.computeSize(
                 SWT.DEFAULT, SWT.DEFAULT));
