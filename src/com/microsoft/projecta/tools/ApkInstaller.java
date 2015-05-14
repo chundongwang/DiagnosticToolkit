@@ -20,6 +20,11 @@ public final class ApkInstaller extends WorkFlowOutOfProcStage {
         mConfig = config;
     }
 
+    @Override
+    public WorkFlowStatus getStatus() {
+        return WorkFlowStatus.INSTALLED_SUCCESS;
+    }
+
     /**
      * adb install <origin_apk>
      */
@@ -27,15 +32,10 @@ public final class ApkInstaller extends WorkFlowOutOfProcStage {
     protected ProcessBuilder startWorkerProcess() throws IOException {
         // TODO install injected apk
         return new ProcessBuilder()
-                .command(mConfig.getSdkToolsPath() + "\\SDK_19.1.0\\platform-tools\\adb.exe",
+                .command(join(mConfig.getSdkToolsPath() , "SDK_19.1.0", "platform-tools", "adb.exe"),
                         "install",
                         mConfig.getOriginApkPath())
                 .directory(new File(mConfig.getOutdirPath()));
-    }
-
-    @Override
-    public WorkFlowStatus getStatus() {
-        return WorkFlowStatus.INSTALLED_SUCCESS;
     }
 
 }

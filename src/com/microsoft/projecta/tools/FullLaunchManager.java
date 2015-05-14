@@ -23,76 +23,11 @@ public final class FullLaunchManager implements WorkFlowProgressListener {
     private static Logger logger = Logger.getLogger(FullLaunchManager.class
             .getSimpleName());
 
-    private LaunchConfig mConfig;
-    private WorkFlowProgressListener mListener;
-    private List<WorkFlowStage> mCurrentStages;
-    private int mTotalStages;
-    private boolean mCancelled;
-    private boolean mStopped;
-
-    public FullLaunchManager(LaunchConfig config,
-            WorkFlowProgressListener listener) {
-        mConfig = config;
-        mListener = listener;
-        mCurrentStages = new ArrayList<WorkFlowStage>();
-        mTotalStages = 0;
-        mCancelled = false;
-        mStopped = false;
+    private static void failfast(Throwable e) {
+        String msg = "FullLaunchManager failfast with " + e.getMessage();
+        logger.severe(msg);
+        throw new RuntimeException(msg, e);
     }
-
-    public int getTotalStages() {
-        return mTotalStages;
-    }
-
-    /**
-     * @return the currentStage
-     */
-    public synchronized List<WorkFlowStage> getCurrentStages() {
-        return mCurrentStages;
-    }
-
-    /**
-     * @param currentStage the currentStage to remove
-     */
-    public synchronized void removeCurrentStage(WorkFlowStage currentStage) {
-        mCurrentStages.remove(currentStage);
-    }
-
-    /**
-     * @param currentStage the currentStage to add
-     */
-    public synchronized void addCurrentStage(WorkFlowStage currentStage) {
-        mCurrentStages.add(currentStage);
-    }
-
-    /**
-     * @return the cancelled
-     */
-    public synchronized boolean isCancelled() {
-        return mCancelled;
-    }
-
-    /**
-     * @param cancelled the cancelled to set
-     */
-    public synchronized void setCancelled(boolean cancelled) {
-        mCancelled = cancelled;
-    }
-
-    /**
-     * @return the stopped
-     */
-    public synchronized boolean isStopped() {
-        return mStopped;
-    }
-
-    /**
-     * @param stopped the stopped to set
-     */
-    public synchronized void setStopped(boolean stopped) {
-        mStopped = stopped;
-    }
-
     /**
      * Detect if this stage should run.
      * 
@@ -110,11 +45,30 @@ public final class FullLaunchManager implements WorkFlowProgressListener {
         }
         return false;
     }
+    private LaunchConfig mConfig;
+    private WorkFlowProgressListener mListener;
+    private List<WorkFlowStage> mCurrentStages;
+    private int mTotalStages;
 
-    private static void failfast(Throwable e) {
-        String msg = "FullLaunchManager failfast with " + e.getMessage();
-        logger.severe(msg);
-        throw new RuntimeException(msg, e);
+    private boolean mCancelled;
+
+    private boolean mStopped;
+
+    public FullLaunchManager(LaunchConfig config,
+            WorkFlowProgressListener listener) {
+        mConfig = config;
+        mListener = listener;
+        mCurrentStages = new ArrayList<WorkFlowStage>();
+        mTotalStages = 0;
+        mCancelled = false;
+        mStopped = false;
+    }
+
+    /**
+     * @param currentStage the currentStage to add
+     */
+    public synchronized void addCurrentStage(WorkFlowStage currentStage) {
+        mCurrentStages.add(currentStage);
     }
 
     /**
@@ -168,30 +122,6 @@ public final class FullLaunchManager implements WorkFlowProgressListener {
     }
 
     /**
-     * Execute specified stage and register this as the listener with it.
-     * 
-     * @param stageStart Stage to be started.
-     */
-    private void executeStage(WorkFlowStage stageStart) {
-        addCurrentStage(stageStart);
-        stageStart.addListener(this);
-        stageStart.start();
-    }
-
-    /**
-     * Build the chain of actions and kick off.
-     */
-    public void launch() {
-        setStopped(false);
-        new Thread(new Runnable() {
-            @Override
-            public void run() {
-                executeStage(buildStages());
-            }
-        }).start();
-    }
-
-    /**
      * cancel current train.
      * 
      * @throws InterruptedException
@@ -211,10 +141,53 @@ public final class FullLaunchManager implements WorkFlowProgressListener {
         }
     }
 
-    @Override
-    public void onProgress(WorkFlowStage sender, WorkFlowStatus status,
-            int progress) {
-        mListener.onProgress(sender, status, progress);
+    /**
+     * Execute specified stage and register this as the listener with it.
+     * 
+     * @param stageStart Stage to be started.
+     */
+    private void executeStage(WorkFlowStage stageStart) {
+        addCurrentStage(stageStart);
+        stageStart.addListener(this);
+        stageStart.start();
+    }
+
+    /**
+     * @return the currentStage
+     */
+    public synchronized List<WorkFlowStage> getCurrentStages() {
+        return mCurrentStages;
+    }
+
+    public int getTotalStages() {
+        return mTotalStages;
+    }
+
+    /**
+     * @return the cancelled
+     */
+    public synchronized boolean isCancelled() {
+        return mCancelled;
+    }
+
+    /**
+     * @return the stopped
+     */
+    public synchronized boolean isStopped() {
+        return mStopped;
+    }
+
+    /**
+     * Build the chain of actions and kick off.
+     */
+    public void launch() {
+        setStopped(false);
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                executeStage(buildStages());
+            }
+        }).start();
     }
 
     @Override
@@ -236,5 +209,32 @@ public final class FullLaunchManager implements WorkFlowProgressListener {
     @Override
     public void onLogOutput(WorkFlowStage sender, String message) {
         mListener.onLogOutput(sender, message);
+    }
+
+    @Override
+    public void onProgress(WorkFlowStage sender, WorkFlowStatus status,
+            int progress) {
+        mListener.onProgress(sender, status, progress);
+    }
+
+    /**
+     * @param currentStage the currentStage to remove
+     */
+    public synchronized void removeCurrentStage(WorkFlowStage currentStage) {
+        mCurrentStages.remove(currentStage);
+    }
+
+    /**
+     * @param cancelled the cancelled to set
+     */
+    public synchronized void setCancelled(boolean cancelled) {
+        mCancelled = cancelled;
+    }
+
+    /**
+     * @param stopped the stopped to set
+     */
+    public synchronized void setStopped(boolean stopped) {
+        mStopped = stopped;
     }
 }

@@ -1,6 +1,5 @@
+
 package com.microsoft.projecta.tools;
-
-
 
 import java.io.File;
 import java.io.IOException;
@@ -20,6 +19,11 @@ public final class ApkInjection extends WorkFlowOutOfProcStage {
         mConfig = config;
     }
 
+    @Override
+    public WorkFlowStatus getStatus() {
+        return WorkFlowStatus.INJECTED_GPINTEROP;
+    }
+
     /**
      * lib\\jython.bat <auto_injection_py> --builddrop <build_drop> --output <out_dir> <origin_apk>
      */
@@ -27,17 +31,12 @@ public final class ApkInjection extends WorkFlowOutOfProcStage {
     protected ProcessBuilder startWorkerProcess() throws IOException {
         return new ProcessBuilder()
                 .command(
-                        "lib\\jython.bat",
-                        mConfig.getInjectionScriptPath() + "\\AutoInjection.py",
+                        join(".", "lib", "jython.bat"),
+                        join(mConfig.getInjectionScriptPath(), "AutoInjection.py"),
                         "--builddrop", mConfig.getBuildDropPath(),
-                        "--output", mConfig.getOutdirPath() + "\\inject",
+                        "--output", join(mConfig.getOutdirPath(), "inject"),
                         mConfig.getOriginApkPath())
                 .directory(new File(mConfig.getOutdirPath()));
-    }
-
-    @Override
-    public WorkFlowStatus getStatus() {
-        return WorkFlowStatus.INJECTED_GPINTEROP;
     }
 
 }

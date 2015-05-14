@@ -52,32 +52,71 @@ public class LaunchProgressDialog extends Dialog {
         mConfig = config;
     }
 
+    /**
+     * Create contents of the dialog.
+     */
+    private void createContents() {
+        shlLaunchProgress = new Shell(getParent(), SWT.BORDER | SWT.RESIZE
+                | SWT.TITLE);
+        shlLaunchProgress.setSize(485, 298);
+        shlLaunchProgress.setText("Launch Progress...");
+        shlLaunchProgress.setLayout(new GridLayout(2, false));
+
+        Label lblTotalProgress = new Label(shlLaunchProgress, SWT.NONE);
+        lblTotalProgress.setLayoutData(new GridData(SWT.FILL, SWT.FILL, false,
+                false, 1, 1));
+        lblTotalProgress.setText("Total Progress");
+
+        progressBarTotal = new ProgressBar(shlLaunchProgress, SWT.NONE);
+        progressBarTotal.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true,
+                false, 1, 1));
+        progressBarTotal.setMaximum(WorkFlowStatus.values().length);
+
+        Label lblStepProgress = new Label(shlLaunchProgress, SWT.NONE);
+        lblStepProgress.setLayoutData(new GridData(SWT.FILL, SWT.FILL, false,
+                false, 1, 1));
+        lblStepProgress.setText("Step Progress");
+
+        progressBarStage = new ProgressBar(shlLaunchProgress, SWT.NONE);
+        progressBarStage.setLayoutData(new GridData(SWT.FILL, SWT.FILL, false,
+                false, 1, 1));
+
+        Label lblOutput = new Label(shlLaunchProgress, SWT.NONE);
+        lblOutput.setLayoutData(new GridData(SWT.RIGHT, SWT.FILL, false, false,
+                1, 1));
+        lblOutput.setText("Output");
+
+        textOutput = new Text(shlLaunchProgress, SWT.BORDER | SWT.READ_ONLY
+                | SWT.H_SCROLL | SWT.V_SCROLL | SWT.CANCEL | SWT.MULTI);
+        textOutput.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, true,
+                1, 1));
+
+        Composite composite = new Composite(shlLaunchProgress, SWT.NONE);
+        composite.setLayout(new FlowLayout(FlowLayout.RIGHT, 5, 5));
+        GridData gd_composite = new GridData(SWT.FILL, SWT.FILL, true, false,
+                2, 1);
+        gd_composite.heightHint = 34;
+        composite.setLayoutData(gd_composite);
+
+        mBtnCancel = new Button(composite, SWT.NONE);
+        mBtnCancel.addMouseListener(new MouseAdapter() {
+            @Override
+            public void mouseUp(MouseEvent e) {
+                mBtnCancel.setEnabled(false);
+                if (!mLaunchManager.isStopped()) {
+                    mLaunchManager.cancel();
+                } else {
+                    shlLaunchProgress.close();
+                }
+            }
+        });
+        mBtnCancel.setText("Cancel");
+
+    }
+
     private void init() {
         mLaunchManager = new FullLaunchManager(mConfig,
                 new WorkFlowProgressListener() {
-
-                    @Override
-                    public void onProgress(WorkFlowStage sender,
-                            final WorkFlowStatus stage, final int progress) {
-                        getParent().getDisplay().asyncExec(new Runnable() {
-                            @Override
-                            public void run() {
-                                progressBarTotal.setMaximum(mLaunchManager
-                                        .getTotalStages());
-                                if (progressBarTotal.getSelection() <= stage
-                                        .ordinal()) {
-                                    boolean shouldUpdate = progressBarTotal
-                                            .getSelection() != stage.ordinal();
-                                    progressBarTotal.setSelection(stage
-                                            .ordinal());
-                                    if (progress > progressBarStage
-                                            .getSelection() || shouldUpdate) {
-                                        progressBarStage.setSelection(progress);
-                                    }
-                                }
-                            }
-                        });
-                    }
 
                     @Override
                     public void onCompleted(final WorkFlowStage sender,
@@ -158,6 +197,29 @@ public class LaunchProgressDialog extends Dialog {
                         });
                     }
 
+                    @Override
+                    public void onProgress(WorkFlowStage sender,
+                            final WorkFlowStatus stage, final int progress) {
+                        getParent().getDisplay().asyncExec(new Runnable() {
+                            @Override
+                            public void run() {
+                                progressBarTotal.setMaximum(mLaunchManager
+                                        .getTotalStages());
+                                if (progressBarTotal.getSelection() <= stage
+                                        .ordinal()) {
+                                    boolean shouldUpdate = progressBarTotal
+                                            .getSelection() != stage.ordinal();
+                                    progressBarTotal.setSelection(stage
+                                            .ordinal());
+                                    if (progress > progressBarStage
+                                            .getSelection() || shouldUpdate) {
+                                        progressBarStage.setSelection(progress);
+                                    }
+                                }
+                            }
+                        });
+                    }
+
                 });
         mLaunchManager.launch();
     }
@@ -179,67 +241,5 @@ public class LaunchProgressDialog extends Dialog {
             }
         }
         return result;
-    }
-
-    /**
-     * Create contents of the dialog.
-     */
-    private void createContents() {
-        shlLaunchProgress = new Shell(getParent(), SWT.BORDER | SWT.RESIZE
-                | SWT.TITLE);
-        shlLaunchProgress.setSize(485, 298);
-        shlLaunchProgress.setText("Launch Progress...");
-        shlLaunchProgress.setLayout(new GridLayout(2, false));
-
-        Label lblTotalProgress = new Label(shlLaunchProgress, SWT.NONE);
-        lblTotalProgress.setLayoutData(new GridData(SWT.FILL, SWT.FILL, false,
-                false, 1, 1));
-        lblTotalProgress.setText("Total Progress");
-
-        progressBarTotal = new ProgressBar(shlLaunchProgress, SWT.NONE);
-        progressBarTotal.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true,
-                false, 1, 1));
-        progressBarTotal.setMaximum(WorkFlowStatus.values().length);
-
-        Label lblStepProgress = new Label(shlLaunchProgress, SWT.NONE);
-        lblStepProgress.setLayoutData(new GridData(SWT.FILL, SWT.FILL, false,
-                false, 1, 1));
-        lblStepProgress.setText("Step Progress");
-
-        progressBarStage = new ProgressBar(shlLaunchProgress, SWT.NONE);
-        progressBarStage.setLayoutData(new GridData(SWT.FILL, SWT.FILL, false,
-                false, 1, 1));
-
-        Label lblOutput = new Label(shlLaunchProgress, SWT.NONE);
-        lblOutput.setLayoutData(new GridData(SWT.RIGHT, SWT.FILL, false, false,
-                1, 1));
-        lblOutput.setText("Output");
-
-        textOutput = new Text(shlLaunchProgress, SWT.BORDER | SWT.READ_ONLY
-                | SWT.H_SCROLL | SWT.V_SCROLL | SWT.CANCEL | SWT.MULTI);
-        textOutput.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, true,
-                1, 1));
-
-        Composite composite = new Composite(shlLaunchProgress, SWT.NONE);
-        composite.setLayout(new FlowLayout(FlowLayout.RIGHT, 5, 5));
-        GridData gd_composite = new GridData(SWT.FILL, SWT.FILL, true, false,
-                2, 1);
-        gd_composite.heightHint = 34;
-        composite.setLayoutData(gd_composite);
-
-        mBtnCancel = new Button(composite, SWT.NONE);
-        mBtnCancel.addMouseListener(new MouseAdapter() {
-            @Override
-            public void mouseUp(MouseEvent e) {
-                mBtnCancel.setEnabled(false);
-                if (!mLaunchManager.isStopped()) {
-                    mLaunchManager.cancel();
-                } else {
-                    shlLaunchProgress.close();
-                }
-            }
-        });
-        mBtnCancel.setText("Cancel");
-
     }
 }

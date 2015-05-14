@@ -1,9 +1,10 @@
+
 package com.microsoft.projecta.tools.workflow;
 
-
-
-
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -40,10 +41,23 @@ public abstract class WorkFlowStage {
                 if (setup()) {
                     execute();
                     cleanup();
+                } else {
+                    logger.logp(Level.SEVERE, WorkFlowStage.this.getClass().getSimpleName(), "run",
+                            String.format("Worker[%s] setup failed.", mName));
+                    fireOnCompleted(WorkFlowResult.FAILED);
                 }
             }
         });
         mCompleted = false;
+    }
+
+    /**
+     * Add the specified listener to the list of listeners.
+     * 
+     * @param listener
+     */
+    public synchronized void addListener(WorkFlowProgressListener listener) {
+        mListeners.add(listener);
     }
 
     /**
@@ -60,50 +74,12 @@ public abstract class WorkFlowStage {
     }
 
     /**
-     * Get all the next steps of this step.
+     * Interrupt the worker thread and wait for CANCEL_PENDING_TIME milliseconds.
      * 
-     * @return
+     * @throws InterruptedException as thrown by thread.join()
      */
-    public List<WorkFlowStage> getNextSteps() {
-        return mNextSteps;
-    }
-
-    /**
-     * Add the specified listener to the list of listeners.
-     * 
-     * @param listener
-     */
-    public synchronized void addListener(WorkFlowProgressListener listener) {
-        mListeners.add(listener);
-    }
-
-    /**
-     * Remove the specified listener from the list of listeners.
-     * 
-     * @param listener
-     * @return true if this list contained the specified listener
-     */
-    public synchronized boolean removeListener(WorkFlowProgressListener listener) {
-        return mListeners.remove(listener);
-    }
-
-    /**
-     * Get the name of this stage.
-     * 
-     * @return
-     */
-    public String getName() {
-        return mName;
-    }
-
-    /**
-     * Tests if the worker thread of this work is alive. A thread is alive if it has been started
-     * and has not yet died.
-     * 
-     * @return true if this thread is alive; false otherwise.
-     */
-    public boolean isAlive() {
-        return mWorkerThread.isAlive();
+    public void cancel() throws InterruptedException {
+        cancel(CANCEL_PENDING_TIME);
     }
 
     /**
@@ -121,27 +97,6 @@ public abstract class WorkFlowStage {
     }
 
     /**
-     * Interrupt the worker thread and wait for CANCEL_PENDING_TIME milliseconds.
-     * 
-     * @throws InterruptedException as thrown by thread.join()
-     */
-    public void cancel() throws InterruptedException {
-        cancel(CANCEL_PENDING_TIME);
-    }
-
-    /**
-     * Consist of pre-requisit steps before execute the work. This function will be executed on same
-     * thread as execute/cleanup. Override this function to have your own logic of starting up.
-     * 
-     * @return true if setup succeeded; false otherwise.
-     */
-    protected boolean setup() {
-        logger.logp(Level.INFO, this.getClass().getSimpleName(), "setup",
-                String.format("Worker[%s] setup done.", mName));
-        return true;
-    }
-
-    /**
      * Consist of post-mortem work to clean it up. This function will be executed on same thread as
      * setup/execute. Override this function to have your own logic of cleaning up.
      */
@@ -155,20 +110,6 @@ public abstract class WorkFlowStage {
      */
     protected abstract void execute();
 
-    /**
-     * The status represents current stage
-     * 
-     * @return The status represents current stage
-     */
-    public abstract WorkFlowStatus getStatus();
-
-    /**
-     * Start the work on a new thread.
-     */
-    public void start() {
-        mWorkerThread.start();
-    }
-
     protected void failfast() {
         failfast(null);
     }
@@ -180,16 +121,6 @@ public abstract class WorkFlowStage {
         }
         logger.severe(msg);
         throw new RuntimeException(msg);
-    }
-
-    protected void fireOnProgress(int progress) {
-        if (mCompleted) {
-            failfast("Attempt to fire onProgress after completed");
-        }
-
-        for (WorkFlowProgressListener listener : mListeners) {
-            listener.onProgress(this, getStatus(), progress);
-        }
     }
 
     protected void fireOnCompleted(WorkFlowResult result) {
@@ -213,5 +144,109 @@ public abstract class WorkFlowStage {
         for (WorkFlowProgressListener listener : mListeners) {
             listener.onLogOutput(this, msg);
         }
+    }
+
+    protected void fireOnProgress(int progress) {
+        if (mCompleted) {
+            failfast("Attempt to fire onProgress after completed");
+        }
+
+        for (WorkFlowProgressListener listener : mListeners) {
+            listener.onProgress(this, getStatus(), progress);
+        }
+    }
+
+    /**
+     * Get the name of this stage.
+     * 
+     * @return
+     */
+    public String getName() {
+        return mName;
+    }
+
+    /**
+     * Get all the next steps of this step.
+     * 
+     * @return
+     */
+    public List<WorkFlowStage> getNextSteps() {
+        return mNextSteps;
+    }
+
+    /**
+     * The status represents current stage
+     * 
+     * @return The status represents current stage
+     */
+    public abstract WorkFlowStatus getStatus();
+
+    /**
+     * Tests if the worker thread of this work is alive. A thread is alive if it has been started
+     * and has not yet died.
+     * 
+     * @return true if this thread is alive; false otherwise.
+     */
+    public boolean isAlive() {
+        return mWorkerThread.isAlive();
+    }
+
+    /**
+     * Helper function to java.nio.file.Paths.get() and it's the equivalent of:
+     * <code>
+     * Paths.get(first, more).toAbsolutePath().normalize().toString()
+     * </code>
+     * 
+     * @param first the path string or initial part of the path string
+     * @param more additional strings to be joined to form the path string
+     * @return
+     */
+    protected String join(String first, String... more) {
+        return Paths.get(first, more)
+                .toAbsolutePath().normalize().toString();
+    }
+
+    /**
+     * Helper function to java.nio.file.Paths.get() and it's the equivalent of:
+     * <code>
+     * Paths.get(first, more).toAbsolutePath().normalize()
+     * </code>
+     * 
+     * @param first the path string or initial part of the path string
+     * @param more additional strings to be joined to form the path string
+     * @return
+     */
+    protected Path path(String first, String... more) {
+        return Paths.get(first, more)
+                .toAbsolutePath().normalize();
+    }
+
+    /**
+     * Remove the specified listener from the list of listeners.
+     * 
+     * @param listener
+     * @return true if this list contained the specified listener
+     */
+    public synchronized boolean removeListener(WorkFlowProgressListener listener) {
+        return mListeners.remove(listener);
+    }
+    
+    /**
+     * Consist of pre-requisit steps before execute the work. This function will be executed on same
+     * thread as execute/cleanup. Override this function to have your own logic of starting up.
+     * 
+     * @return true if setup succeeded; false otherwise.
+     */
+    protected boolean setup() {
+        logger.logp(Level.INFO, this.getClass().getSimpleName(), "setup",
+                String.format("Worker[%s] setup done.", mName));
+        return true;
+    }
+
+    /**
+     * Start the work on a new thread.
+     */
+    public void start() {
+        mWorkerThread.start();
     }
 }

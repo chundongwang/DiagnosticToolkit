@@ -20,6 +20,11 @@ public class ProvisionVM extends WorkFlowOutOfProcStage {
         mConfig = config;
     }
 
+    @Override
+    public WorkFlowStatus getStatus() {
+        return WorkFlowStatus.PROVISIONED_VM;
+    }
+
     /**
      * powershell.exe <provision_script>
      */
@@ -29,11 +34,6 @@ public class ProvisionVM extends WorkFlowOutOfProcStage {
                 .command("powershell.exe",
                         mConfig.getOriginApkPath())
                 .directory(new File(mConfig.getOutdirPath()));
-    }
-
-    @Override
-    public WorkFlowStatus getStatus() {
-        return WorkFlowStatus.PROVISIONED_VM;
     }
 
 }

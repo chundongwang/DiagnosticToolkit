@@ -40,22 +40,6 @@ public abstract class WorkFlowOutOfProcStage extends WorkFlowStage {
         mWorkerProcDesc = workerProcDesc;
     }
 
-    /**
-     * @return the workerProcDesc
-     */
-    public synchronized String getWorkerProcDesc() {
-        return mWorkerProcDesc;
-    }
-
-    /**
-     * @param workerProcDesc the workerProcDesc to set
-     */
-    public synchronized void setWorkerProcDesc(String workerProcDesc) {
-        mWorkerProcDesc = workerProcDesc;
-    }
-
-    protected abstract ProcessBuilder startWorkerProcess() throws IOException;
-
     @Override
     public void execute() {
         if (mWorkerProc != null) {
@@ -108,4 +92,20 @@ public abstract class WorkFlowOutOfProcStage extends WorkFlowStage {
             fireOnCompleted(result);
         }
     }
+
+    /**
+     * @return the workerProcDesc
+     */
+    public synchronized String getWorkerProcDesc() {
+        return mWorkerProcDesc;
+    }
+
+    /**
+     * @param workerProcDesc the workerProcDesc to set
+     */
+    public synchronized void setWorkerProcDesc(String workerProcDesc) {
+        mWorkerProcDesc = workerProcDesc;
+    }
+
+    protected abstract ProcessBuilder startWorkerProcess() throws IOException;
 }

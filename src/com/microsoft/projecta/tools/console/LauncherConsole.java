@@ -10,35 +10,16 @@ import com.microsoft.projecta.tools.workflow.WorkFlowStage;
 import com.microsoft.projecta.tools.workflow.WorkFlowStatus;
 
 public class LauncherConsole implements WorkFlowProgressListener {
-    private LaunchConfig mConfig;
-    private boolean mCompleted;
-    private Thread mThread;
-    private FullLaunchManager mLaunchManager;
-
-    public void setOriginApk(String path) {
-        mConfig.setOriginApkPath(path);
-    }
-
     public static void main(String[] args) {
         LauncherConsole console = new LauncherConsole();
         console.setOriginApk(args[args.length - 1]);
         console.run();
     }
+    private LaunchConfig mConfig;
+    private boolean mCompleted;
+    private Thread mThread;
 
-    public void run() {
-        mConfig.setInjectionScriptPath("z:\\build\\tools\\autoInjection");
-        mConfig.setSdkToolsPath("E:\\ProjectA-windows\\");
-        
-        System.out.println("==========");
-        System.out.println(mConfig.toString());
-        System.out.println("==========");
-        mLaunchManager.launch();
-        try {
-            mThread.join();
-        } catch (InterruptedException e) {
-            System.err.println("Main thread interrupted. Exiting...");
-        }
-    }
+    private FullLaunchManager mLaunchManager;
 
     public LauncherConsole() {
         mConfig = new LaunchConfig.Builder(Branch.Develop).build();
@@ -60,12 +41,6 @@ public class LauncherConsole implements WorkFlowProgressListener {
     }
 
     @Override
-    public void onProgress(WorkFlowStage sender, final WorkFlowStatus stage, final int progress) {
-        System.out.print(String.format("\r[%s]%s: %d%%", sender.getName(), stage.toString(),
-                progress));
-    }
-
-    @Override
     public void onCompleted(final WorkFlowStage sender, final WorkFlowStatus stage,
             final WorkFlowResult result) {
         System.out.println(String.format("[%s]%s completed with %s", sender.getName(),
@@ -79,6 +54,31 @@ public class LauncherConsole implements WorkFlowProgressListener {
     @Override
     public void onLogOutput(final WorkFlowStage sender, final String message) {
         System.err.println(String.format("[%s]: %s", sender.getName(), message));
+    }
+
+    @Override
+    public void onProgress(WorkFlowStage sender, final WorkFlowStatus stage, final int progress) {
+        System.out.print(String.format("\r[%s]%s: %d%%", sender.getName(), stage.toString(),
+                progress));
+    }
+
+    public void run() {
+        mConfig.setInjectionScriptPath("z:\\build\\tools\\autoInjection");
+        mConfig.setSdkToolsPath("E:\\ProjectA-windows\\");
+        
+        System.out.println("==========");
+        System.out.println(mConfig.toString());
+        System.out.println("==========");
+        mLaunchManager.launch();
+        try {
+            mThread.join();
+        } catch (InterruptedException e) {
+            System.err.println("Main thread interrupted. Exiting...");
+        }
+    }
+
+    public void setOriginApk(String path) {
+        mConfig.setOriginApkPath(path);
     }
 
 }

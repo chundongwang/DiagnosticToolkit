@@ -8,15 +8,15 @@ public enum WorkFlowResult {
 
     private String mReason;
 
+    public String getReason() {
+        return mReason;
+    }
+
     public boolean hasReason() {
         return mReason != null;
     }
 
     public void setReason(String reason) {
         mReason = reason;
-    }
-
-    public String getReason() {
-        return mReason;
     }
 }

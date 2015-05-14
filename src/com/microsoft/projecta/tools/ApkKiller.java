@@ -20,21 +20,21 @@ public class ApkKiller extends WorkFlowOutOfProcStage {
         mConfig = config;
     }
 
+    @Override
+    public WorkFlowStatus getStatus() {
+        return WorkFlowStatus.KILLED_SUCCESS;
+    }
+
     /**
      * adb shell am kill <package_name>
      */
     @Override
     protected ProcessBuilder startWorkerProcess() throws IOException {
         return new ProcessBuilder()
-                .command(mConfig.getSdkToolsPath() + "\\SDK_19.1.0\\platform-tools\\adb.exe",
+                .command(join(mConfig.getSdkToolsPath() , "SDK_19.1.0", "platform-tools", "adb.exe"),
                         "install",
                         mConfig.getOriginApkPath())
                 .directory(new File(mConfig.getOutdirPath()));
-    }
-
-    @Override
-    public WorkFlowStatus getStatus() {
-        return WorkFlowStatus.KILLED_SUCCESS;
     }
 
 }

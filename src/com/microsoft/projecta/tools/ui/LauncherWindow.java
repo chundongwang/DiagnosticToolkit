@@ -34,12 +34,25 @@ import com.microsoft.projecta.tools.config.LaunchConfig;
 
 public class LauncherWindow {
 
-    protected Shell shlDiagnosticLauncher;
+    /**
+     * Launch the application.
+     * 
+     * @param args
+     */
+    public static void main(String[] args) {
+        try {
+            LauncherWindow window = new LauncherWindow();
+            window.open();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
 
+    protected Shell shlDiagnosticLauncher;
     private Display display;
     private Text mTextOriginApkPath;
-    private Text mTextOutputDir;
 
+    private Text mTextOutputDir;
     private LaunchConfig mConfig;
     private Text mTextBuildDrop;
     private Text mTextTakehomePath;
@@ -49,12 +62,8 @@ public class LauncherWindow {
     private Button mBtnProvisionVm;
     private Button mBtnInjectApk;
     private Button mBtnTakeScreenshot;
-    private Button mBtnGo;
 
-    private void init() {
-        // On UI thread
-        changeBranch(Branch.Develop, true);
-    }
+    private Button mBtnGo;
 
     /**
      * Change branch to specified one which might cause reloading all default configs. If we decided
@@ -93,86 +102,6 @@ public class LauncherWindow {
                     });
                 }
             }).start();
-        }
-    }
-
-    /**
-     * Helper to pick a directory
-     * 
-     * @param title DirectoryDialog title
-     * @param msg DirectoryDialog message
-     * @param default_value default folder to start with
-     * @return folder path user picked
-     */
-    private String pickDirectory(String title, String msg, String default_value) {
-        DirectoryDialog dirPickerDialog = new DirectoryDialog(
-                this.shlDiagnosticLauncher);
-        dirPickerDialog.setText(title);
-        dirPickerDialog.setMessage(msg);
-        if (default_value != null) {
-            dirPickerDialog.setFilterPath(default_value);
-        }
-        return dirPickerDialog.open();
-    }
-
-    /**
-     * Sync launch config to UI controls
-     * 
-     * @param config The config to replace stored mConfig. Use null if just want to trigger a sync.
-     */
-    private void syncConfigToUI(LaunchConfig config) {
-        // on UI thread
-        if (config != null) {
-            mConfig = config;
-        }
-
-        mTextBuildDrop.setText(mConfig.getBuildDropPath());
-        mTextTakehomePath.setText(mConfig.getTakehomeScriptPath());
-        mTextSdkToolsPath.setText(mConfig.getSdkToolsPath());
-        mTextInjectionScriptPath.setText(mConfig.getInjectionScriptPath());
-        mComboDevice.setText(mConfig.getDeviceIPAddr());
-        if (mConfig.hasOriginApkPath()) {
-            mTextOriginApkPath.setText(mConfig.getOriginApkPath());
-        }
-        if (mConfig.hasOutdirPath()) {
-            mTextOutputDir.setText(mConfig.getOutdirPath());
-        }
-        mBtnProvisionVm.setSelection(mConfig.shouldProvisionVM());
-        mBtnInjectApk.setSelection(mConfig.shouldInject());
-        mBtnTakeScreenshot.setSelection(mConfig.shouldTakeSnapshot());
-
-        if (mConfig.hasOriginApkPath() && mConfig.hasOutdirPath()) {
-            mBtnGo.setEnabled(true);
-        }
-    }
-
-    /**
-     * Launch the application.
-     * 
-     * @param args
-     */
-    public static void main(String[] args) {
-        try {
-            LauncherWindow window = new LauncherWindow();
-            window.open();
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-    }
-
-    /**
-     * Open the window.
-     */
-    public void open() {
-        display = Display.getDefault();
-        createContents();
-        init();
-        shlDiagnosticLauncher.open();
-        shlDiagnosticLauncher.layout();
-        while (!shlDiagnosticLauncher.isDisposed()) {
-            if (!display.readAndDispatch()) {
-                display.sleep();
-            }
         }
     }
 
@@ -480,5 +409,76 @@ public class LauncherWindow {
         mBtnGo.setLayoutData(fd_btnGo);
         mBtnGo.setText("Go!");
 
+    }
+
+    private void init() {
+        // On UI thread
+        changeBranch(Branch.Develop, true);
+    }
+
+    /**
+     * Open the window.
+     */
+    public void open() {
+        display = Display.getDefault();
+        createContents();
+        init();
+        shlDiagnosticLauncher.open();
+        shlDiagnosticLauncher.layout();
+        while (!shlDiagnosticLauncher.isDisposed()) {
+            if (!display.readAndDispatch()) {
+                display.sleep();
+            }
+        }
+    }
+
+    /**
+     * Helper to pick a directory
+     * 
+     * @param title DirectoryDialog title
+     * @param msg DirectoryDialog message
+     * @param default_value default folder to start with
+     * @return folder path user picked
+     */
+    private String pickDirectory(String title, String msg, String default_value) {
+        DirectoryDialog dirPickerDialog = new DirectoryDialog(
+                this.shlDiagnosticLauncher);
+        dirPickerDialog.setText(title);
+        dirPickerDialog.setMessage(msg);
+        if (default_value != null) {
+            dirPickerDialog.setFilterPath(default_value);
+        }
+        return dirPickerDialog.open();
+    }
+
+    /**
+     * Sync launch config to UI controls
+     * 
+     * @param config The config to replace stored mConfig. Use null if just want to trigger a sync.
+     */
+    private void syncConfigToUI(LaunchConfig config) {
+        // on UI thread
+        if (config != null) {
+            mConfig = config;
+        }
+
+        mTextBuildDrop.setText(mConfig.getBuildDropPath());
+        mTextTakehomePath.setText(mConfig.getTakehomeScriptPath());
+        mTextSdkToolsPath.setText(mConfig.getSdkToolsPath());
+        mTextInjectionScriptPath.setText(mConfig.getInjectionScriptPath());
+        mComboDevice.setText(mConfig.getDeviceIPAddr());
+        if (mConfig.hasOriginApkPath()) {
+            mTextOriginApkPath.setText(mConfig.getOriginApkPath());
+        }
+        if (mConfig.hasOutdirPath()) {
+            mTextOutputDir.setText(mConfig.getOutdirPath());
+        }
+        mBtnProvisionVm.setSelection(mConfig.shouldProvisionVM());
+        mBtnInjectApk.setSelection(mConfig.shouldInject());
+        mBtnTakeScreenshot.setSelection(mConfig.shouldTakeSnapshot());
+
+        if (mConfig.hasOriginApkPath() && mConfig.hasOutdirPath()) {
+            mBtnGo.setEnabled(true);
+        }
     }
 }

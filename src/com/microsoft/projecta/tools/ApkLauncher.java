@@ -20,6 +20,11 @@ public class ApkLauncher extends WorkFlowOutOfProcStage {
         mConfig = config;
     }
 
+    @Override
+    public WorkFlowStatus getStatus() {
+        return WorkFlowStatus.LAUNCH_SUCCESS;
+    }
+
     /**
      * adb shell am start <INTENT>
      * <INTENT> = -a <ACTION> -c <CATEGORY> -n <COMPONENT> 
@@ -29,17 +34,12 @@ public class ApkLauncher extends WorkFlowOutOfProcStage {
     @Override
     protected ProcessBuilder startWorkerProcess() throws IOException {
         return new ProcessBuilder()
-                .command(mConfig.getSdkToolsPath() + "\\SDK_19.1.0\\platform-tools\\adb.exe",
+                .command(join(mConfig.getSdkToolsPath() , "SDK_19.1.0", "platform-tools", "adb.exe"),
                         "shell", "am", "start", 
                         "-a", "android.intent.action.MAIN",
                         "-c", "android.intent.category.LAUNCHER",
                         mConfig.getOriginApkPath())
                 .directory(new File(mConfig.getOutdirPath()));
-    }
-
-    @Override
-    public WorkFlowStatus getStatus() {
-        return WorkFlowStatus.LAUNCH_SUCCESS;
     }
 
 }
