@@ -12,13 +12,13 @@ import com.microsoft.projecta.tools.workflow.WorkFlowStatus;
 public class LauncherConsole implements WorkFlowProgressListener {
     public static void main(String[] args) {
         LauncherConsole console = new LauncherConsole();
-        console.setOriginApk(args[args.length - 1]);
-        console.run();
+        console.mConfig.setOriginApkPath(args[args.length - 1]);
+        console.kickoff();
     }
+
     private LaunchConfig mConfig;
     private boolean mCompleted;
     private Thread mThread;
-
     private FullLaunchManager mLaunchManager;
 
     public LauncherConsole() {
@@ -38,6 +38,21 @@ public class LauncherConsole implements WorkFlowProgressListener {
         });
         mThread.setDaemon(true);
         mLaunchManager = new FullLaunchManager(mConfig, this);
+    }
+
+    public void kickoff() {
+        mConfig.setInjectionScriptPath("z:\\build\\tools\\autoInjection");
+        //mConfig.setSdkToolsPath("E:\\ProjectA-windows\\");
+
+        System.out.println("==========");
+        System.out.println(mConfig.toString());
+        System.out.println("==========");
+        mLaunchManager.launch();
+        try {
+            mThread.join();
+        } catch (InterruptedException e) {
+            System.err.println("Main thread interrupted. Exiting...");
+        }
     }
 
     @Override
@@ -61,24 +76,4 @@ public class LauncherConsole implements WorkFlowProgressListener {
         System.out.print(String.format("\r[%s]%s: %d%%", sender.getName(), stage.toString(),
                 progress));
     }
-
-    public void run() {
-        mConfig.setInjectionScriptPath("z:\\build\\tools\\autoInjection");
-        mConfig.setSdkToolsPath("E:\\ProjectA-windows\\");
-        
-        System.out.println("==========");
-        System.out.println(mConfig.toString());
-        System.out.println("==========");
-        mLaunchManager.launch();
-        try {
-            mThread.join();
-        } catch (InterruptedException e) {
-            System.err.println("Main thread interrupted. Exiting...");
-        }
-    }
-
-    public void setOriginApk(String path) {
-        mConfig.setOriginApkPath(path);
-    }
-
 }
