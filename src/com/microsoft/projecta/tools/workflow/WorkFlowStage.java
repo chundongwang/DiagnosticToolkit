@@ -4,7 +4,6 @@ package com.microsoft.projecta.tools.workflow;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -15,8 +14,7 @@ import java.util.logging.Logger;
  * reported back to registered listeners.
  */
 public abstract class WorkFlowStage {
-    private static Logger logger = Logger.getLogger(WorkFlowStage.class
-            .getSimpleName());
+    private static Logger logger = Logger.getLogger(WorkFlowStage.class.getSimpleName());
 
     private int CANCEL_PENDING_TIME = 500; // ms
     protected List<WorkFlowStage> mNextSteps;
@@ -39,8 +37,14 @@ public abstract class WorkFlowStage {
                 logger.logp(Level.INFO, WorkFlowStage.this.getClass().getSimpleName(), "run",
                         String.format("Worker[%s] stared.", mName));
                 if (setup()) {
+                    logger.logp(Level.INFO, WorkFlowStage.this.getClass().getSimpleName(), "setup",
+                            String.format("Worker[%s] setup done.", mName));
                     execute();
+                    logger.logp(Level.INFO, WorkFlowStage.this.getClass().getSimpleName(), "setup",
+                            String.format("Worker[%s] execute done.", mName));
                     cleanup();
+                    logger.logp(Level.INFO, WorkFlowStage.this.getClass().getSimpleName(), "setup",
+                            String.format("Worker[%s] cleanup done.", mName));
                 } else {
                     logger.logp(Level.SEVERE, WorkFlowStage.this.getClass().getSimpleName(), "run",
                             String.format("Worker[%s] setup failed.", mName));
@@ -101,8 +105,6 @@ public abstract class WorkFlowStage {
      * setup/execute. Override this function to have your own logic of cleaning up.
      */
     protected void cleanup() {
-        logger.logp(Level.INFO, this.getClass().getSimpleName(), "cleanup",
-                String.format("Worker[%s] cleaned up.", mName));
     }
 
     /**
@@ -117,7 +119,7 @@ public abstract class WorkFlowStage {
     protected void failfast(String err) {
         String msg = getClass().getSimpleName() + " failfast";
         if (err != null) {
-            msg = msg + err;
+            msg = msg + " : " + err;
         }
         logger.severe(msg);
         throw new RuntimeException(msg);
@@ -137,10 +139,19 @@ public abstract class WorkFlowStage {
     }
 
     protected void fireOnLogOutput(String msg) {
+        fireOnLogOutput(logger, Level.INFO, msg);
+    }
+
+    protected void fireOnLogOutput(Logger l, Level level, String msg) {
+        fireOnLogOutput(logger, Level.INFO, msg, null);
+    }
+
+    protected void fireOnLogOutput(Logger l, Level level, String msg, Throwable e) {
         if (mCompleted) {
             failfast("Attempt to fire onLogOutput after completed");
         }
 
+        l.log(level, msg, e);
         for (WorkFlowProgressListener listener : mListeners) {
             listener.onLogOutput(this, msg);
         }
@@ -192,8 +203,7 @@ public abstract class WorkFlowStage {
     }
 
     /**
-     * Helper function to java.nio.file.Paths.get() and it's the equivalent of:
-     * <code>
+     * Helper function to java.nio.file.Paths.get() and it's the equivalent of: <code>
      * Paths.get(first, more).toAbsolutePath().normalize().toString()
      * </code>
      * 
@@ -202,13 +212,11 @@ public abstract class WorkFlowStage {
      * @return
      */
     protected String join(String first, String... more) {
-        return Paths.get(first, more)
-                .toAbsolutePath().normalize().toString();
+        return Paths.get(first, more).toAbsolutePath().normalize().toString();
     }
 
     /**
-     * Helper function to java.nio.file.Paths.get() and it's the equivalent of:
-     * <code>
+     * Helper function to java.nio.file.Paths.get() and it's the equivalent of: <code>
      * Paths.get(first, more).toAbsolutePath().normalize()
      * </code>
      * 
@@ -217,8 +225,7 @@ public abstract class WorkFlowStage {
      * @return
      */
     protected Path path(String first, String... more) {
-        return Paths.get(first, more)
-                .toAbsolutePath().normalize();
+        return Paths.get(first, more).toAbsolutePath().normalize();
     }
 
     /**
@@ -230,7 +237,7 @@ public abstract class WorkFlowStage {
     public synchronized boolean removeListener(WorkFlowProgressListener listener) {
         return mListeners.remove(listener);
     }
-    
+
     /**
      * Consist of pre-requisit steps before execute the work. This function will be executed on same
      * thread as execute/cleanup. Override this function to have your own logic of starting up.
@@ -238,8 +245,6 @@ public abstract class WorkFlowStage {
      * @return true if setup succeeded; false otherwise.
      */
     protected boolean setup() {
-        logger.logp(Level.INFO, this.getClass().getSimpleName(), "setup",
-                String.format("Worker[%s] setup done.", mName));
         return true;
     }
 

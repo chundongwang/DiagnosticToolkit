@@ -127,16 +127,13 @@ public final class LaunchConfig {
         }
     }
     private String mBuildDropPath;
-
     private String mTakehomeScriptPath;
     private String mSdkToolsPath;
     private String mInjectionScriptPath;
     private String mDeviceIPAddr;
-    private String mOriginApkPath;
-    
+    private String mOriginApkPath;    
     private String mOutdirPath;
     private String mInjectedApkPath;
-
     private String mUnzippedSdkToolsPath;
     private boolean mShouldProvisionVM;
     private boolean mShouldInject;
@@ -224,6 +221,13 @@ public final class LaunchConfig {
      */
     public boolean hasOutdirPath() {
         return mOutdirPath != null && mOutdirPath.length() > 0;
+    }
+
+    /**
+     * @return if has injected apk file
+     */
+    public boolean hasInjectedApkPath() {
+        return mInjectedApkPath != null && mInjectedApkPath.length() > 0;
     }
 
     /**

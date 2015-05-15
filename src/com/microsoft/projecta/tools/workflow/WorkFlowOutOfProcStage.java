@@ -1,6 +1,5 @@
+
 package com.microsoft.projecta.tools.workflow;
-
-
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -28,7 +27,7 @@ public abstract class WorkFlowOutOfProcStage extends WorkFlowStage {
                         fireOnLogOutput(line);
                     }
                 } catch (IOException e) {
-                    logger.log(Level.SEVERE, "Error reading from worker process stdout/stderr", e);
+                    fireOnLogOutput(logger, Level.SEVERE, "Error reading from worker process stdout/stderr", e);
                 }
             }
         }
@@ -43,7 +42,7 @@ public abstract class WorkFlowOutOfProcStage extends WorkFlowStage {
     @Override
     public void execute() {
         if (mWorkerProc != null) {
-            logger.warning("Double execution? Attempt to recover...");
+            fireOnLogOutput(logger, Level.WARNING, "Double execution? Attempt to recover...");
             mWorkerProc.destroy();
             mWorkerProc = null;
         }
@@ -69,12 +68,15 @@ public abstract class WorkFlowOutOfProcStage extends WorkFlowStage {
             }
 
             // 4. should have completed
-            output_handler.join();
+            if (output_handler.isAlive()) {
+                fireOnLogOutput("Waiting for " + getWorkerProcDesc() + " to finish...");
+                output_handler.join();
+            }
             fireOnLogOutput(getWorkerProcDesc() + " exited with " + exit_code);
 
         } catch (InterruptedException e) {
             // Cancelled by user
-            logger.log(Level.SEVERE, "Interupted while executing " + getWorkerProcDesc(), e);
+            fireOnLogOutput(logger, Level.SEVERE, "Interupted while executing " + getWorkerProcDesc(), e);
             result = WorkFlowResult.CANCELLED;
             if (mWorkerProc != null) {
                 mWorkerProc.destroy();
@@ -84,7 +86,7 @@ public abstract class WorkFlowOutOfProcStage extends WorkFlowStage {
                 output_handler.interrupt();
             }
         } catch (IOException e) {
-            logger.log(Level.SEVERE,
+            fireOnLogOutput(logger, Level.SEVERE,
                     "Error reading from " + getWorkerProcDesc() + " stdout/stderr", e);
             result = WorkFlowResult.FAILED;
             result.setReason(getWorkerProcDesc() + " failed with " + e.getMessage());

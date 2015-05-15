@@ -14,6 +14,7 @@ import java.util.zip.ZipException;
 import java.util.zip.ZipFile;
 
 import com.microsoft.projecta.tools.config.LaunchConfig;
+import com.microsoft.projecta.tools.config.OS;
 import com.microsoft.projecta.tools.workflow.WorkFlowOutOfProcStage;
 import com.microsoft.projecta.tools.workflow.WorkFlowStatus;
 
@@ -94,31 +95,58 @@ public final class DeviceConnection extends WorkFlowOutOfProcStage {
     public WorkFlowStatus getStatus() {
         return WorkFlowStatus.DEVICE_CONNECTED;
     }
+    
+    private File getOsSubdirZipFile(String sdkToolsPath) {
+        File subdirZip = null;
+        if (OS.CurrentOS == OS.WINDOWS) {
+            subdirZip = path(sdkToolsPath, "PC", "ProjectA-windows.zip").toFile();
+        } else if (OS.CurrentOS == OS.MAC) {
+            subdirZip = path(sdkToolsPath, "MAC", "ProjectA-darwin.zip").toFile();
+        } else {
+            failfast("Not supported platform: "+OS.CurrentOS);
+        }
+        return subdirZip;
+    }
+    
+    private boolean isSdkBuildDrop(String sdkToolsPath){
+        File subdirTools = path(sdkToolsPath, "tools").toFile();
+        if (subdirTools.exists() && subdirTools.isDirectory()) {
+            return false;
+        } else {
+            File subdirOs = getOsSubdirZipFile(sdkToolsPath);
+            if (subdirOs.exists() && subdirOs.isFile()) {
+                return true;
+            }
+        }
+        // failfast should always throw a RuntimeException and won't actually return.
+        failfast(sdkToolsPath + " is neither a sdk build drop nor a unpacked folder.");
+        return false;
+    }
 
     @Override
     protected boolean setup() {
-        File sdkTools = new File(mConfig.getSdkToolsPath());
         boolean setup_result = false;
-        if (sdkTools.isDirectory()) {
+        if (!isSdkBuildDrop(mConfig.getSdkToolsPath())) {
             mConfig.setUnzippedSdkToolsPath(mConfig.getSdkToolsPath());
             setup_result = true;
         } else {
-            File unzippedSdkTools = path(mConfig.getOutdirPath(), "sdkTools").toFile();
-            if (unzippedSdkTools.exists() && unzippedSdkTools.isDirectory()) {
+            File zippedSdk = getOsSubdirZipFile(mConfig.getSdkToolsPath());
+            File unzippedSdk = path(mConfig.getOutdirPath(), "sdkTools").toFile();
+            if (unzippedSdk.exists() && unzippedSdk.isDirectory()) {
                 // TODO check if this is the same version as mConfig.getSdkToolsPath()
-                mConfig.setUnzippedSdkToolsPath(unzippedSdkTools.getAbsolutePath());
+                mConfig.setUnzippedSdkToolsPath(unzippedSdk.getAbsolutePath());
                 setup_result = true;
             } else {
                 // Unzip
                 try {
-                    unZipAll(sdkTools, unzippedSdkTools);
+                    unZipAll(zippedSdk, unzippedSdk);
                     setup_result = true;
                 } catch (IOException e) {
                     // TODO clean up the unzipped folder?
                     setup_result = false;
                     String error_msg = String.format(
                             "Error occurred while unzipping sdk tools from %s to %s",
-                            sdkTools.getAbsolutePath(), unzippedSdkTools.getAbsolutePath());
+                            zippedSdk.getAbsolutePath(), unzippedSdk.getAbsolutePath());
                     fireOnLogOutput(error_msg);
                     fireOnLogOutput(e.getMessage());
                     logger.log(Level.SEVERE, error_msg, e);
