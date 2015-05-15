@@ -15,10 +15,10 @@ import java.util.zip.ZipFile;
 
 import com.microsoft.projecta.tools.config.LaunchConfig;
 import com.microsoft.projecta.tools.config.OS;
-import com.microsoft.projecta.tools.workflow.WorkFlowOutOfProcStage;
+import com.microsoft.projecta.tools.workflow.WorkFlowSingleProcStage;
 import com.microsoft.projecta.tools.workflow.WorkFlowStatus;
 
-public final class DeviceConnection extends WorkFlowOutOfProcStage {
+public final class DeviceConnection extends WorkFlowSingleProcStage {
     private static Logger logger = Logger.getLogger(DeviceConnection.class
             .getSimpleName());
     private static final int UNZIP_BUFFER = 2048;
@@ -161,6 +161,7 @@ public final class DeviceConnection extends WorkFlowOutOfProcStage {
      */
     @Override
     protected ProcessBuilder startWorkerProcess() throws IOException {
+        // TODO save the log somewhere?
         return new ProcessBuilder().command(
                 join(mConfig.getUnzippedSdkToolsPath(), "tools", "wconnect.exe"),
                 mConfig.getDeviceIPAddr()).directory(

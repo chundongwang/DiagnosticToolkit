@@ -7,8 +7,8 @@ import java.io.InputStreamReader;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-public abstract class WorkFlowOutOfProcStage extends WorkFlowStage {
-    private static Logger logger = Logger.getLogger(WorkFlowOutOfProcStage.class.getSimpleName());
+public abstract class WorkFlowSingleProcStage extends WorkFlowStage {
+    private static Logger logger = Logger.getLogger(WorkFlowSingleProcStage.class.getSimpleName());
 
     private String mWorkerProcDesc;
     private Process mWorkerProc;
@@ -33,7 +33,7 @@ public abstract class WorkFlowOutOfProcStage extends WorkFlowStage {
         }
     };
 
-    public WorkFlowOutOfProcStage(String name, String workerProcDesc) {
+    public WorkFlowSingleProcStage(String name, String workerProcDesc) {
         super(name);
         mWorkerProc = null;
         mWorkerProcDesc = workerProcDesc;

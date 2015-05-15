@@ -6,18 +6,20 @@ import java.io.IOException;
 import java.nio.file.FileVisitResult;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.nio.file.SimpleFileVisitor;
+import java.nio.file.StandardCopyOption;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import com.microsoft.projecta.tools.config.LaunchConfig;
 import com.microsoft.projecta.tools.config.OS;
-import com.microsoft.projecta.tools.workflow.WorkFlowOutOfProcStage;
+import com.microsoft.projecta.tools.workflow.WorkFlowSingleProcStage;
 import com.microsoft.projecta.tools.workflow.WorkFlowResult;
 import com.microsoft.projecta.tools.workflow.WorkFlowStatus;
 
-public final class ApkInjection extends WorkFlowOutOfProcStage {
+public final class ApkInjection extends WorkFlowSingleProcStage {
     private static Logger logger = Logger.getLogger(ApkInjection.class.getSimpleName());
     private LaunchConfig mConfig;
 
@@ -90,14 +92,16 @@ public final class ApkInjection extends WorkFlowOutOfProcStage {
                 case WINDOWS:
                     if (Runtime.getRuntime().exec("RD /S /Q \"" + target + "\"").waitFor() != 0) {
                         deleted = false;
-                        fireOnLogOutput(logger, Level.WARNING, "Non-zero exit of RD while deleting " + target);
+                        fireOnLogOutput(logger, Level.WARNING,
+                                "Non-zero exit of RD while deleting " + target);
                     }
                     break;
                 case LINUX:
                 case MAC:
                     if (Runtime.getRuntime().exec("rm -rf \"" + target + "\"").waitFor() != 0) {
                         deleted = false;
-                        fireOnLogOutput(logger, Level.WARNING, "Non-zero exit of rm while deleting " + target);
+                        fireOnLogOutput(logger, Level.WARNING,
+                                "Non-zero exit of rm while deleting " + target);
                     }
                     break;
                 default:
@@ -113,14 +117,6 @@ public final class ApkInjection extends WorkFlowOutOfProcStage {
         }
     }
 
-    private static String getNameWithoutExtension(String fileName) {
-        int pos = fileName.lastIndexOf(".");
-        if (pos > 0) {
-            fileName = fileName.substring(0, pos);
-        }
-        return fileName;
-    }
-
     @Override
     protected boolean setup() {
         boolean result = false;
@@ -129,15 +125,15 @@ public final class ApkInjection extends WorkFlowOutOfProcStage {
             // local drop is <outdir>\\inject\\<apk_name>
             File localInjectDropDir = path(mConfig.getOutdirPath(), "inject",
                     getNameWithoutExtension(remoteApkFile.getName())).toFile();
-            
+
+            // local origin apk is <outdir>\\inject\\<apk_name>\\<apk_name>.apk
+            File localOriginApk = path(localInjectDropDir.getAbsolutePath(),
+                    remoteApkFile.getName()).toFile();
             // First of all, check if we have just injected it
-            if (localInjectDropDir.exists() && localInjectDropDir.isDirectory()) {
-                // local origin apk is <outdir>\\inject\\<apk_name>\\<apk_name>.apk
-                File localOriginApk = path(localInjectDropDir.getAbsolutePath(),
-                        remoteApkFile.getName()).toFile();
-                if (localOriginApk.exists()) {
-                    // TODO check last modified date?
-                    // Already injected
+            if (localInjectDropDir.exists() && localInjectDropDir.isDirectory()
+                    && localOriginApk.exists()) {
+                if (localOriginApk.lastModified() == remoteApkFile.lastModified()) {
+                    // Already injected and skip execution as we've injected the exact apk before
                     fireOnLogOutput("Found injected app locally. Will skip injection.");
                     mConfig.setInjectedApkPath(localOriginApk.getAbsolutePath());
                     result = true;
@@ -150,6 +146,11 @@ public final class ApkInjection extends WorkFlowOutOfProcStage {
                     delete(path(localInjectDropDir.getAbsolutePath()));
                 }
                 if (localInjectDropDir.mkdirs()) {
+                    Files.copy(Paths.get(remoteApkFile.getAbsolutePath()),
+                            path(localOriginApk.getAbsolutePath()),
+                            StandardCopyOption.COPY_ATTRIBUTES);
+                    // Use local copy of origin apk for injection
+                    mConfig.setOriginApkPath(localOriginApk.getAbsolutePath());
                     result = true;
                 }
             } catch (IOException e) {
@@ -160,16 +161,18 @@ public final class ApkInjection extends WorkFlowOutOfProcStage {
         }
         return result;
     }
-    
+
     /**
      * Do some pre-check
      */
     @Override
     public void execute() {
         if (mConfig.hasInjectedApkPath()) {
+            // skip execution as we've injected the exact apk before
             fireOnCompleted(WorkFlowResult.SUCCESS);
+        } else {
+            super.execute();
         }
-        super.execute();
     }
 
     /**
@@ -177,6 +180,7 @@ public final class ApkInjection extends WorkFlowOutOfProcStage {
      */
     @Override
     protected ProcessBuilder startWorkerProcess() throws IOException {
+        // TODO save the log somewhere?
         return new ProcessBuilder().command(join(".", "lib", "jython.bat"),
                 join(mConfig.getInjectionScriptPath(), "AutoInjection.py"), "--builddrop",
                 mConfig.getBuildDropPath(), "--output", join(mConfig.getOutdirPath(), "inject"),

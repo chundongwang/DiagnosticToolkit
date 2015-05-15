@@ -7,10 +7,10 @@ import java.io.IOException;
 import java.util.logging.Logger;
 
 import com.microsoft.projecta.tools.config.LaunchConfig;
-import com.microsoft.projecta.tools.workflow.WorkFlowOutOfProcStage;
+import com.microsoft.projecta.tools.workflow.WorkFlowSingleProcStage;
 import com.microsoft.projecta.tools.workflow.WorkFlowStatus;
 
-public class ApkKiller extends WorkFlowOutOfProcStage {
+public class ApkKiller extends WorkFlowSingleProcStage {
     private static Logger logger = Logger.getLogger(ApkKiller.class
             .getSimpleName());
     private LaunchConfig mConfig;

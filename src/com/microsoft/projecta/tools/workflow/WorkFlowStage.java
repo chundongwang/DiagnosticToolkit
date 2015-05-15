@@ -147,13 +147,12 @@ public abstract class WorkFlowStage {
     }
 
     protected void fireOnLogOutput(Logger l, Level level, String msg, Throwable e) {
-        if (mCompleted) {
-            failfast("Attempt to fire onLogOutput after completed");
-        }
-
         l.log(level, msg, e);
-        for (WorkFlowProgressListener listener : mListeners) {
-            listener.onLogOutput(this, msg);
+        // only update listener on log output if not yet completed which means cleanup is muted.
+        if (!mCompleted) {
+            for (WorkFlowProgressListener listener : mListeners) {
+                listener.onLogOutput(this, msg);
+            }
         }
     }
 
@@ -253,5 +252,19 @@ public abstract class WorkFlowStage {
      */
     public void start() {
         mWorkerThread.start();
+    }
+
+    /**
+     * Getting file name without extension.
+     * 
+     * @param fileName
+     * @return
+     */
+    protected static String getNameWithoutExtension(String fileName) {
+        int pos = fileName.lastIndexOf(".");
+        if (pos > 0) {
+            fileName = fileName.substring(0, pos);
+        }
+        return fileName;
     }
 }
