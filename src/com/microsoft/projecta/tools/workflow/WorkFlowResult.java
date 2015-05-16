@@ -1,7 +1,5 @@
+
 package com.microsoft.projecta.tools.workflow;
-
-
-
 
 public enum WorkFlowResult {
     SUCCESS, FAILED, CANCELLED;

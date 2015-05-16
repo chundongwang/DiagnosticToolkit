@@ -5,13 +5,7 @@ import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.nio.file.Paths;
 
-import com.microsoft.projecta.tools.ApkInjection;
-import com.microsoft.projecta.tools.ApkInstaller;
-import com.microsoft.projecta.tools.ApkKiller;
 import com.microsoft.projecta.tools.ApkLauncher;
-import com.microsoft.projecta.tools.DeviceConnection;
-import com.microsoft.projecta.tools.FullLaunchManager;
-import com.microsoft.projecta.tools.ProvisionVM;
 import com.microsoft.projecta.tools.config.Branch;
 import com.microsoft.projecta.tools.config.LaunchConfig;
 import com.microsoft.projecta.tools.workflow.WorkFlowProgressListener;
@@ -81,16 +75,17 @@ public class LauncherConsole implements WorkFlowProgressListener {
         mConfig.setInjectionScriptPath("z:\\build\\tools\\autoInjection");
         mConfig.setDeviceIPAddr("10.81.209.142");
         mConfig.setOriginApkPath(apkPath);
-        // mConfig.setSdkToolsPath("E:\\ProjectA-windows\\");
+        mConfig.setUnzippedSdkToolsPath("C:\\tools\\ProjectA-windows");
 
         System.out.println("==========");
         System.out.println(mConfig.toString());
         System.out.println("==========");
-        WorkFlowStage startStage = buildStages(mConfig, ApkInjection.class,
-                DeviceConnection.class, ApkInstaller.class, ApkLauncher.class,
-                ApkKiller.class);
-        startStage.addListener(this);
-        startStage.start();
+        // WorkFlowStage startStage_full = buildStages(mConfig, ApkInjection.class,
+        // DeviceConnection.class, ApkInstaller.class, ApkLauncher.class,
+        // ApkKiller.class);
+        WorkFlowStage startStage_single = buildStages(mConfig, ApkLauncher.class);
+        startStage_single.addListener(this);
+        startStage_single.start();
 
         try {
             mThread.start();

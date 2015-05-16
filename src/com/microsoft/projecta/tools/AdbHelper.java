@@ -15,7 +15,7 @@ public class AdbHelper {
         mAdbPath = adbPath.toAbsolutePath();
         mWorkingDir = workingDir;
     }
-    
+
     /**
      * @return the suppressNonZeroException
      */
@@ -29,7 +29,7 @@ public class AdbHelper {
     public void setSuppressNonZeroException(boolean suppressNonZeroException) {
         mSuppressNonZeroException = suppressNonZeroException;
     }
-    
+
     public String getAdbPath() {
         return mAdbPath.toString();
     }
@@ -37,18 +37,20 @@ public class AdbHelper {
     public void logcat(String... args) throws InterruptedException, IOException, AdbException {
         exec("logcat", args);
     }
-    
+
     public void shell(String... args) throws InterruptedException, IOException, AdbException {
         exec("shell", args);
     }
 
-    public void exec(String command, String... args) throws InterruptedException, IOException, AdbException {
+    public void exec(String command, String... args) throws InterruptedException, IOException,
+            AdbException {
         String[] cmd_line = new String[args.length + 1];
         cmd_line[0] = mAdbPath.toString();
         System.arraycopy(args, 0, cmd_line, 1, args.length);
-        int exitCode = new ProcessBuilder().command(cmd_line).directory(mWorkingDir.toFile()).start().waitFor();
+        int exitCode = new ProcessBuilder().command(cmd_line).directory(mWorkingDir.toFile())
+                .start().waitFor();
         if (exitCode != 0 && !isSuppressNonZeroException()) {
-            throw new AdbException("adb "+command+" failed with exit code: "+exitCode);
+            throw new AdbException("adb " + command + " failed with exit code: " + exitCode);
         }
     }
 

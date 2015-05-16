@@ -1,7 +1,5 @@
+
 package com.microsoft.projecta.tools.config;
-
-
-
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -128,12 +126,13 @@ public final class LaunchConfig {
             return this;
         }
     }
+
     private String mBuildDropPath;
     private String mTakehomeScriptPath;
     private String mSdkToolsPath;
     private String mInjectionScriptPath;
     private String mDeviceIPAddr;
-    private String mOriginApkPath;    
+    private String mOriginApkPath;
     private String mOutdirPath;
     private String mInjectedApkPath;
     private String mUnzippedSdkToolsPath;
@@ -205,11 +204,11 @@ public final class LaunchConfig {
     }
 
     /**
-	 * @return the unzippedSdkToolsPath
-	 */
-	public String getUnzippedSdkToolsPath() {
-		return mUnzippedSdkToolsPath;
-	}
+     * @return the unzippedSdkToolsPath
+     */
+    public String getUnzippedSdkToolsPath() {
+        return mUnzippedSdkToolsPath;
+    }
 
     /**
      * @return if has origin apk path
@@ -310,11 +309,11 @@ public final class LaunchConfig {
     }
 
     /**
-	 * @param unzippedSdkToolsPath the unzippedSdkToolsPath to set
-	 */
-	public void setUnzippedSdkToolsPath(String unzippedSdkToolsPath) {
-		mUnzippedSdkToolsPath = unzippedSdkToolsPath;
-	}
+     * @param unzippedSdkToolsPath the unzippedSdkToolsPath to set
+     */
+    public void setUnzippedSdkToolsPath(String unzippedSdkToolsPath) {
+        mUnzippedSdkToolsPath = unzippedSdkToolsPath;
+    }
 
     /**
      * @return the shouldInject
@@ -323,14 +322,14 @@ public final class LaunchConfig {
         return mShouldInject;
     }
 
-	/**
+    /**
      * @return the shouldProvisionVM
      */
     public boolean shouldProvisionVM() {
         return mShouldProvisionVM;
     }
 
-	/**
+    /**
      * @return the shouldTakeSnapshot
      */
     public boolean shouldTakeSnapshot() {
@@ -372,11 +371,11 @@ public final class LaunchConfig {
         }
         return fileName;
     }
-    
+
     public String getApkName() {
         return getNameWithoutExtension(Paths.get(mOriginApkPath));
     }
-    
+
     public String getTmpDir() {
         return Paths.get(getOutdirPath(), "tmp").toString();
     }

@@ -15,8 +15,8 @@ import java.util.logging.Logger;
 
 import com.microsoft.projecta.tools.config.LaunchConfig;
 import com.microsoft.projecta.tools.config.OS;
-import com.microsoft.projecta.tools.workflow.WorkFlowSingleProcStage;
 import com.microsoft.projecta.tools.workflow.WorkFlowResult;
+import com.microsoft.projecta.tools.workflow.WorkFlowSingleProcStage;
 import com.microsoft.projecta.tools.workflow.WorkFlowStatus;
 
 public final class ApkInjection extends WorkFlowSingleProcStage {
@@ -128,7 +128,7 @@ public final class ApkInjection extends WorkFlowSingleProcStage {
         Path remoteApkFile = Paths.get(mConfig.getOriginApkPath());
         if (Files.exists(remoteApkFile) && Files.isRegularFile(remoteApkFile)) {
             boolean needInjection = true;
-            
+
             // local drop is <outdir>\\inject\\<apk_name>
             Path localInjectDropDir = path(mConfig.getOutdirPath(), "inject", mConfig.getApkName());
 
@@ -165,7 +165,8 @@ public final class ApkInjection extends WorkFlowSingleProcStage {
                     }
                     if (Files.createDirectories(localInjectDropDir) != null) {
                         Files.copy(remoteApkFile, localOriginApk,
-                                StandardCopyOption.COPY_ATTRIBUTES, StandardCopyOption.REPLACE_EXISTING);
+                                StandardCopyOption.COPY_ATTRIBUTES,
+                                StandardCopyOption.REPLACE_EXISTING);
                         // Use local copy of origin apk for injection
                         mConfig.setOriginApkPath(localOriginApk.toString());
                         result = true;
@@ -203,7 +204,7 @@ public final class ApkInjection extends WorkFlowSingleProcStage {
     @Override
     protected ProcessBuilder startWorkerProcess() throws IOException {
         // TODO save the log somewhere?
-        return new ProcessBuilder().command(join(".", "lib", "jython.bat"),
+        return new ProcessBuilder().command(join(".", "libs", "jython.bat"),
                 join(mConfig.getInjectionScriptPath(), "AutoInjection.py"), "--builddrop",
                 mConfig.getBuildDropPath(), "--output", join(mConfig.getOutdirPath(), "inject"),
                 mConfig.getOriginApkPath()).directory(new File(mConfig.getOutdirPath()));

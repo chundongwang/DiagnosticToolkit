@@ -8,11 +8,7 @@ import java.nio.file.Path;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-import javax.xml.parsers.DocumentBuilderFactory;
-import javax.xml.parsers.ParserConfigurationException;
-
-import org.w3c.dom.Document;
-import org.xml.sax.SAXException;
+import org.xmlpull.v1.XmlPullParserException;
 
 import com.microsoft.projecta.tools.config.LaunchConfig;
 import com.microsoft.projecta.tools.workflow.WorkFlowSingleProcStage;
@@ -43,43 +39,25 @@ public class ApkLauncher extends WorkFlowSingleProcStage {
     protected boolean setup() {
         boolean result = false;
         try {
-            Path androidManifest = path(mConfig.getTmpDir(), "AndroidManifest.xml");
-            int exitCode = Runtime
-                    .getRuntime()
-                    .exec(new String[] {
-                            "cmd.exe",
-                            "/C",
-                            join(mConfig.getUnzippedSdkToolsPath(), "SDK_19.1.0", "build-tools",
-                                    "android-4.4.4", "aapt.exe"), "dump", "xmltree",
-                            "\"" + mConfig.getOriginApkPath() + "\"", "AndroidManifest.xml", ">",
-                            androidManifest.toString()
-                    }).waitFor();
+            // parse AndroidManifest.xml
+            fireOnLogOutput("Parsing AndroidManifest.xml...");
+            AndroidManifestHelper info = AndroidManifestHelper.parseAndroidManifest(mConfig
+                    .getOriginApkPath());
+            mConfig.setApkPackageName(info.getPackageName());
 
-            if (exitCode != 0) {
-                fireOnLogOutput(logger, Level.SEVERE,
-                        "Failed to dump AndroidManifest.xml with exit code: " + exitCode);
-            } else {
-                // parse AndroidManifest.xml
-                fireOnLogOutput("Parsing AndroidManifest.xml...");
-                mConfig.setApkPackageName(AndroidManifestHelper.parsePackageName(androidManifest));
+            // even if logcat -c failed, we should still probably keep going
+            mAdbHelper = AdbHelper.getInstance(mConfig.getUnzippedSdkToolsPath(),
+                    mConfig.getOutdirPath());
+            result = true;
 
-                mAdbHelper = AdbHelper.getInstance(mConfig.getUnzippedSdkToolsPath(),
-                        mConfig.getOutdirPath());
-                // even if logcat -c failed, we should still probably keep going
-                result = true;
-
-                // clear logcat before launch
-                mAdbHelper.logcat("-c");
-            }
-        } catch (InterruptedException | IOException e) {
+            // clear logcat before launch
+            mAdbHelper.logcat("-c");
+        } catch (InterruptedException | IOException | XmlPullParserException e) {
             fireOnLogOutput(logger, Level.SEVERE,
-                    "Error occured while dumping AndroidManifest.xml and/or clearing logcat", e);
+                    "Error occured while parsing AndroidManifest.xml and/or clearing logcat", e);
         } catch (AdbException e) {
             fireOnLogOutput(logger, Level.SEVERE,
                     "Error occured while running adb to clear logcat ", e);
-        } catch (SAXException | ParserConfigurationException e) {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
         }
         return result;
     }

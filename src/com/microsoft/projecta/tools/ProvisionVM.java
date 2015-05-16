@@ -1,6 +1,5 @@
+
 package com.microsoft.projecta.tools;
-
-
 
 import java.io.File;
 import java.io.IOException;

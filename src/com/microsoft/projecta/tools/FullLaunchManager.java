@@ -7,12 +7,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Logger;
 
-import com.microsoft.projecta.tools.ApkInjection;
-import com.microsoft.projecta.tools.ApkInstaller;
-import com.microsoft.projecta.tools.ApkKiller;
-import com.microsoft.projecta.tools.ApkLauncher;
-import com.microsoft.projecta.tools.DeviceConnection;
-import com.microsoft.projecta.tools.ProvisionVM;
 import com.microsoft.projecta.tools.config.LaunchConfig;
 import com.microsoft.projecta.tools.workflow.WorkFlowProgressListener;
 import com.microsoft.projecta.tools.workflow.WorkFlowResult;
@@ -28,6 +22,7 @@ public final class FullLaunchManager implements WorkFlowProgressListener {
         logger.severe(msg);
         throw new RuntimeException(msg, e);
     }
+
     /**
      * Detect if this stage should run.
      * 
@@ -45,6 +40,7 @@ public final class FullLaunchManager implements WorkFlowProgressListener {
         }
         return false;
     }
+
     private LaunchConfig mConfig;
     private WorkFlowProgressListener mListener;
     private List<WorkFlowStage> mCurrentStages;
@@ -69,7 +65,7 @@ public final class FullLaunchManager implements WorkFlowProgressListener {
      */
     public synchronized void addCurrentStage(WorkFlowStage currentStage) {
         mCurrentStages.add(currentStage);
-    }    
+    }
 
     /**
      * Build the chain of actions for launch workflow. Will need to be updated each time we add

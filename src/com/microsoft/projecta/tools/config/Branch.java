@@ -1,7 +1,5 @@
+
 package com.microsoft.projecta.tools.config;
-
-
-
 
 /**
  * Branch of Project Astoria L1=Master L2=Develop
