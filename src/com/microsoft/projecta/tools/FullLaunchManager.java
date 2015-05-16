@@ -69,7 +69,7 @@ public final class FullLaunchManager implements WorkFlowProgressListener {
      */
     public synchronized void addCurrentStage(WorkFlowStage currentStage) {
         mCurrentStages.add(currentStage);
-    }
+    }    
 
     /**
      * Build the chain of actions for launch workflow. Will need to be updated each time we add

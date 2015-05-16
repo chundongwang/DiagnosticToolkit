@@ -90,10 +90,15 @@ public final class ApkInjection extends WorkFlowSingleProcStage {
         try {
             switch (OS.CurrentOS) {
                 case WINDOWS:
-                    if (Runtime.getRuntime().exec("cmd /C RD /S /Q \"" + target + "\"").waitFor() != 0) {
-                        deleted = false;
-                        fireOnLogOutput(logger, Level.WARNING,
-                                "Non-zero exit of RD while deleting " + target);
+                    if (Files.isDirectory(target)) {
+                        if (Runtime.getRuntime().exec("cmd /C RD /S /Q \"" + target + "\"")
+                                .waitFor() != 0) {
+                            deleted = false;
+                            fireOnLogOutput(logger, Level.WARNING,
+                                    "Non-zero exit of RD while deleting " + target);
+                        } else {
+                            deleted = true;
+                        }
                     }
                     break;
                 case LINUX:
@@ -160,7 +165,7 @@ public final class ApkInjection extends WorkFlowSingleProcStage {
                     }
                     if (Files.createDirectories(localInjectDropDir) != null) {
                         Files.copy(remoteApkFile, localOriginApk,
-                                StandardCopyOption.COPY_ATTRIBUTES);
+                                StandardCopyOption.COPY_ATTRIBUTES, StandardCopyOption.REPLACE_EXISTING);
                         // Use local copy of origin apk for injection
                         mConfig.setOriginApkPath(localOriginApk.toString());
                         result = true;

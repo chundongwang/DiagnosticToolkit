@@ -1,9 +1,17 @@
 
 package com.microsoft.projecta.tools.console;
 
+import java.lang.reflect.Constructor;
+import java.lang.reflect.InvocationTargetException;
 import java.nio.file.Paths;
 
+import com.microsoft.projecta.tools.ApkInjection;
+import com.microsoft.projecta.tools.ApkInstaller;
+import com.microsoft.projecta.tools.ApkKiller;
+import com.microsoft.projecta.tools.ApkLauncher;
+import com.microsoft.projecta.tools.DeviceConnection;
 import com.microsoft.projecta.tools.FullLaunchManager;
+import com.microsoft.projecta.tools.ProvisionVM;
 import com.microsoft.projecta.tools.config.Branch;
 import com.microsoft.projecta.tools.config.LaunchConfig;
 import com.microsoft.projecta.tools.workflow.WorkFlowProgressListener;
@@ -13,15 +21,41 @@ import com.microsoft.projecta.tools.workflow.WorkFlowStatus;
 
 public class LauncherConsole implements WorkFlowProgressListener {
     public static void main(String[] args) {
-        LauncherConsole console = new LauncherConsole();
-        console.mConfig.setOriginApkPath(args[args.length - 1]);
-        console.kickoff();
+        new LauncherConsole().kickoff(args[args.length - 1]);
     }
 
     private LaunchConfig mConfig;
     private boolean mCompleted;
     private Thread mThread;
-    private FullLaunchManager mLaunchManager;
+
+    @SuppressWarnings("rawtypes")
+    private static WorkFlowStage buildStages(LaunchConfig config, Class<?>... steps) {
+        WorkFlowStage stageStart = null;
+        WorkFlowStage stageCurrent = null;
+        WorkFlowStage stage = null;
+
+        for (Class<?> k : steps) {
+            Constructor ctor;
+            try {
+                ctor = k.getConstructor(LaunchConfig.class);
+                stage = (WorkFlowStage) ctor.newInstance(config);
+                if (stageCurrent != null) {
+                    stageCurrent.addNextStep(stage);
+                }
+                stageCurrent = stage;
+                if (stageStart == null) {
+                    stageStart = stageCurrent;
+                }
+            } catch (NoSuchMethodException | SecurityException | InstantiationException
+                    | IllegalAccessException | IllegalArgumentException
+                    | InvocationTargetException e) {
+                System.err.println("Build stages chain failed.");
+                e.printStackTrace(System.err);
+            }
+        }
+
+        return stageStart;
+    }
 
     public LauncherConsole() {
         mConfig = new LaunchConfig.Builder(Branch.Develop).build();
@@ -39,20 +73,27 @@ public class LauncherConsole implements WorkFlowProgressListener {
             }
         });
         mThread.setDaemon(true);
-        mLaunchManager = new FullLaunchManager(mConfig, this);
     }
 
-    public void kickoff() {
-        mConfig.setOutdirPath(Paths.get(System.getProperty("user.dir"), "tmp").normalize().toAbsolutePath().toString());
+    public void kickoff(String apkPath) {
+        mConfig.setOutdirPath(Paths.get(System.getProperty("user.dir"), "tmp").normalize()
+                .toAbsolutePath().toString());
         mConfig.setInjectionScriptPath("z:\\build\\tools\\autoInjection");
         mConfig.setDeviceIPAddr("10.81.209.142");
-        //mConfig.setSdkToolsPath("E:\\ProjectA-windows\\");
+        mConfig.setOriginApkPath(apkPath);
+        // mConfig.setSdkToolsPath("E:\\ProjectA-windows\\");
 
         System.out.println("==========");
         System.out.println(mConfig.toString());
         System.out.println("==========");
-        mLaunchManager.launch();
+        WorkFlowStage startStage = buildStages(mConfig, ApkInjection.class,
+                DeviceConnection.class, ApkInstaller.class, ApkLauncher.class,
+                ApkKiller.class);
+        startStage.addListener(this);
+        startStage.start();
+
         try {
+            mThread.start();
             mThread.join();
         } catch (InterruptedException e) {
             System.err.println("Main thread interrupted. Exiting...");
