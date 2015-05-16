@@ -34,20 +34,15 @@ public abstract class WorkFlowStage {
         mWorkerThread = new Thread(new Runnable() {
             @Override
             public void run() {
-                logger.logp(Level.INFO, WorkFlowStage.this.getClass().getSimpleName(), "run",
-                        String.format("Worker[%s] stared.", mName));
+                fireOnLogOutput(logger, Level.INFO, "Setting up...");
                 if (setup()) {
-                    logger.logp(Level.INFO, WorkFlowStage.this.getClass().getSimpleName(), "setup",
-                            String.format("Worker[%s] setup done.", mName));
+                    fireOnLogOutput(logger, Level.INFO, "Setup done. Executing...");
                     execute();
-                    logger.logp(Level.INFO, WorkFlowStage.this.getClass().getSimpleName(), "setup",
-                            String.format("Worker[%s] execute done.", mName));
+                    fireOnLogOutput(logger, Level.INFO, "Execution done. Cleaning up...");
                     cleanup();
-                    logger.logp(Level.INFO, WorkFlowStage.this.getClass().getSimpleName(), "setup",
-                            String.format("Worker[%s] cleanup done.", mName));
+                    fireOnLogOutput(logger, Level.INFO, "Cleanup done.");
                 } else {
-                    logger.logp(Level.SEVERE, WorkFlowStage.this.getClass().getSimpleName(), "run",
-                            String.format("Worker[%s] setup failed.", mName));
+                    fireOnLogOutput(logger, Level.INFO, "Setup failed.");
                     fireOnCompleted(WorkFlowResult.FAILED);
                 }
             }
@@ -147,7 +142,7 @@ public abstract class WorkFlowStage {
     }
 
     protected void fireOnLogOutput(Logger l, Level level, String msg, Throwable e) {
-        l.log(level, msg, e);
+        // l.log(level, msg, e);
         // only update listener on log output if not yet completed which means cleanup is muted.
         if (!mCompleted) {
             for (WorkFlowProgressListener listener : mListeners) {
@@ -252,19 +247,5 @@ public abstract class WorkFlowStage {
      */
     public void start() {
         mWorkerThread.start();
-    }
-
-    /**
-     * Getting file name without extension.
-     * 
-     * @param fileName
-     * @return
-     */
-    protected static String getNameWithoutExtension(String fileName) {
-        int pos = fileName.lastIndexOf(".");
-        if (pos > 0) {
-            fileName = fileName.substring(0, pos);
-        }
-        return fileName;
     }
 }

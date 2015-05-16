@@ -8,6 +8,8 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.logging.Logger;
 
 public final class LaunchConfig {
@@ -135,9 +137,9 @@ public final class LaunchConfig {
     private String mOutdirPath;
     private String mInjectedApkPath;
     private String mUnzippedSdkToolsPath;
+    private String mApkPackageName;
     private boolean mShouldProvisionVM;
     private boolean mShouldInject;
-
     private boolean mShouldTakeSnapshot;
 
     private LaunchConfig() {
@@ -333,6 +335,50 @@ public final class LaunchConfig {
      */
     public boolean shouldTakeSnapshot() {
         return mShouldTakeSnapshot;
+    }
+
+    /**
+     * @return the apkPackageName
+     */
+    public String getApkPackageName() {
+        return mApkPackageName;
+    }
+
+    /**
+     * @param apkPackageName the apkPackageName to set
+     */
+    public void setApkPackageName(String apkPackageName) {
+        mApkPackageName = apkPackageName;
+    }
+
+    /**
+     * @return if has apk package name
+     */
+    public boolean hasApkPackageName() {
+        return mApkPackageName != null && mApkPackageName.length() > 0;
+    }
+
+    /**
+     * Getting file name without extension.
+     * 
+     * @param path Path to the file
+     * @return
+     */
+    private static String getNameWithoutExtension(Path path) {
+        String fileName = path.getFileName().toString();
+        int pos = fileName.lastIndexOf(".");
+        if (pos > 0) {
+            fileName = fileName.substring(0, pos);
+        }
+        return fileName;
+    }
+    
+    public String getApkName() {
+        return getNameWithoutExtension(Paths.get(mOriginApkPath));
+    }
+    
+    public String getTmpDir() {
+        return Paths.get(getOutdirPath(), "tmp").toString();
     }
 
     public String toString() {

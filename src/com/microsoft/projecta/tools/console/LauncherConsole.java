@@ -1,6 +1,8 @@
 
 package com.microsoft.projecta.tools.console;
 
+import java.nio.file.Paths;
+
 import com.microsoft.projecta.tools.FullLaunchManager;
 import com.microsoft.projecta.tools.config.Branch;
 import com.microsoft.projecta.tools.config.LaunchConfig;
@@ -41,7 +43,9 @@ public class LauncherConsole implements WorkFlowProgressListener {
     }
 
     public void kickoff() {
+        mConfig.setOutdirPath(Paths.get(System.getProperty("user.dir"), "tmp").normalize().toAbsolutePath().toString());
         mConfig.setInjectionScriptPath("z:\\build\\tools\\autoInjection");
+        mConfig.setDeviceIPAddr("10.81.209.142");
         //mConfig.setSdkToolsPath("E:\\ProjectA-windows\\");
 
         System.out.println("==========");

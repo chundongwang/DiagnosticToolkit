@@ -27,7 +27,8 @@ public abstract class WorkFlowSingleProcStage extends WorkFlowStage {
                         fireOnLogOutput(line);
                     }
                 } catch (IOException e) {
-                    fireOnLogOutput(logger, Level.SEVERE, "Error reading from worker process stdout/stderr", e);
+                    fireOnLogOutput(logger, Level.SEVERE,
+                            "Error reading from worker process stdout/stderr", e);
                 }
             }
         }
@@ -51,7 +52,8 @@ public abstract class WorkFlowSingleProcStage extends WorkFlowStage {
         WorkFlowResult result = WorkFlowResult.FAILED;
         try {
             // 1. kick off
-            mWorkerProc = startWorkerProcess().redirectErrorStream(true).start();
+            ProcessBuilder pb = startWorkerProcess().redirectErrorStream(true);
+            mWorkerProc = pb.start();
 
             // 2. monitoring output
             output_handler = new Thread(mWorkerProcOutputHandler);
@@ -59,7 +61,6 @@ public abstract class WorkFlowSingleProcStage extends WorkFlowStage {
 
             // 3. wait for exiting
             int exit_code = mWorkerProc.waitFor();
-            mWorkerProc = null;
             if (exit_code == 0) {
                 result = WorkFlowResult.SUCCESS;
             } else {
@@ -68,6 +69,7 @@ public abstract class WorkFlowSingleProcStage extends WorkFlowStage {
             }
 
             // 4. should have completed
+            output_handler.interrupt();
             if (output_handler.isAlive()) {
                 fireOnLogOutput("Waiting for " + getWorkerProcDesc() + " to finish...");
                 output_handler.join();
@@ -76,7 +78,8 @@ public abstract class WorkFlowSingleProcStage extends WorkFlowStage {
 
         } catch (InterruptedException e) {
             // Cancelled by user
-            fireOnLogOutput(logger, Level.SEVERE, "Interupted while executing " + getWorkerProcDesc(), e);
+            fireOnLogOutput(logger, Level.SEVERE, "Interupted while executing "
+                    + getWorkerProcDesc(), e);
             result = WorkFlowResult.CANCELLED;
             if (mWorkerProc != null) {
                 mWorkerProc.destroy();
@@ -86,8 +89,8 @@ public abstract class WorkFlowSingleProcStage extends WorkFlowStage {
                 output_handler.interrupt();
             }
         } catch (IOException e) {
-            fireOnLogOutput(logger, Level.SEVERE,
-                    "Error reading from " + getWorkerProcDesc() + " stdout/stderr", e);
+            fireOnLogOutput(logger, Level.SEVERE, "Error reading from " + getWorkerProcDesc()
+                    + " stdout/stderr", e);
             result = WorkFlowResult.FAILED;
             result.setReason(getWorkerProcDesc() + " failed with " + e.getMessage());
         } finally {

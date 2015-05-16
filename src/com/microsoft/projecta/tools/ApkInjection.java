@@ -90,7 +90,7 @@ public final class ApkInjection extends WorkFlowSingleProcStage {
         try {
             switch (OS.CurrentOS) {
                 case WINDOWS:
-                    if (Runtime.getRuntime().exec("RD /S /Q \"" + target + "\"").waitFor() != 0) {
+                    if (Runtime.getRuntime().exec("cmd /C RD /S /Q \"" + target + "\"").waitFor() != 0) {
                         deleted = false;
                         fireOnLogOutput(logger, Level.WARNING,
                                 "Non-zero exit of RD while deleting " + target);
@@ -120,43 +120,56 @@ public final class ApkInjection extends WorkFlowSingleProcStage {
     @Override
     protected boolean setup() {
         boolean result = false;
-        File remoteApkFile = new File(mConfig.getOriginApkPath());
-        if (remoteApkFile.exists() && remoteApkFile.isFile()) {
+        Path remoteApkFile = Paths.get(mConfig.getOriginApkPath());
+        if (Files.exists(remoteApkFile) && Files.isRegularFile(remoteApkFile)) {
+            boolean needInjection = true;
+            
             // local drop is <outdir>\\inject\\<apk_name>
-            File localInjectDropDir = path(mConfig.getOutdirPath(), "inject",
-                    getNameWithoutExtension(remoteApkFile.getName())).toFile();
+            Path localInjectDropDir = path(mConfig.getOutdirPath(), "inject", mConfig.getApkName());
 
             // local origin apk is <outdir>\\inject\\<apk_name>\\<apk_name>.apk
-            File localOriginApk = path(localInjectDropDir.getAbsolutePath(),
-                    remoteApkFile.getName()).toFile();
+            Path localOriginApk = path(mConfig.getOutdirPath(), "inject").resolve(
+                    remoteApkFile.getFileName().toString());
+            Path localInjectedApk = path(mConfig.getOutdirPath(), "inject").resolve(
+                    mConfig.getApkName() + "-injected-signed" + ".apk");
             // First of all, check if we have just injected it
-            if (localInjectDropDir.exists() && localInjectDropDir.isDirectory()
-                    && localOriginApk.exists()) {
-                if (localOriginApk.lastModified() == remoteApkFile.lastModified()) {
-                    // Already injected and skip execution as we've injected the exact apk before
-                    fireOnLogOutput("Found injected app locally. Will skip injection.");
-                    mConfig.setInjectedApkPath(localOriginApk.getAbsolutePath());
-                    result = true;
+            if (Files.exists(localInjectDropDir) && Files.isDirectory(localInjectDropDir)
+                    && Files.exists(localInjectedApk) && Files.isRegularFile(localInjectedApk)
+                    && Files.exists(localOriginApk) && Files.isRegularFile(localOriginApk)) {
+                try {
+                    if (Files.getLastModifiedTime(localOriginApk).equals(
+                            Files.getLastModifiedTime(remoteApkFile))) {
+                        // Already injected and skip execution as we've injected the exact apk
+                        // before
+                        fireOnLogOutput("Found injected app locally. Will skip injection.");
+                        mConfig.setInjectedApkPath(localInjectedApk.toString());
+                        result = true;
+                        needInjection = false;
+                    }
+                } catch (IOException e) {
+                    fireOnLogOutput(logger, Level.WARNING, "Cannot compare last modified time of "
+                            + remoteApkFile + " and " + localOriginApk + ". Will re-inject. ", e);
                 }
             }
-            // Need injection. clean up the folder and mkdirs afterwards
-            try {
-                mConfig.setInjectedApkPath(null);
-                if (localInjectDropDir.exists()) {
-                    delete(path(localInjectDropDir.getAbsolutePath()));
+            if (needInjection) {
+                // Need injection. clean up the folder and mkdirs afterwards
+                try {
+                    mConfig.setInjectedApkPath(null);
+                    if (Files.exists(localInjectDropDir)) {
+                        delete(localInjectDropDir);
+                    }
+                    if (Files.createDirectories(localInjectDropDir) != null) {
+                        Files.copy(remoteApkFile, localOriginApk,
+                                StandardCopyOption.COPY_ATTRIBUTES);
+                        // Use local copy of origin apk for injection
+                        mConfig.setOriginApkPath(localOriginApk.toString());
+                        result = true;
+                    }
+                } catch (IOException e) {
+                    result = false;
+                    fireOnLogOutput(logger, Level.SEVERE, "Cannot clean up " + localInjectDropDir
+                            + " for injection purpose.", e);
                 }
-                if (localInjectDropDir.mkdirs()) {
-                    Files.copy(Paths.get(remoteApkFile.getAbsolutePath()),
-                            path(localOriginApk.getAbsolutePath()),
-                            StandardCopyOption.COPY_ATTRIBUTES);
-                    // Use local copy of origin apk for injection
-                    mConfig.setOriginApkPath(localOriginApk.getAbsolutePath());
-                    result = true;
-                }
-            } catch (IOException e) {
-                result = false;
-                logger.severe("Cannot use clean up " + localInjectDropDir.getAbsolutePath()
-                        + " for injection purpose.");
             }
         }
         return result;
@@ -172,6 +185,10 @@ public final class ApkInjection extends WorkFlowSingleProcStage {
             fireOnCompleted(WorkFlowResult.SUCCESS);
         } else {
             super.execute();
+            // Naming pattern: <inject_root>\<apk_name_wo_ext>-injected-signed.apk
+            Path localInjectedApk = path(mConfig.getOutdirPath(), "inject").resolve(
+                    mConfig.getApkName() + "-injected-signed" + ".apk");
+            mConfig.setInjectedApkPath(localInjectedApk.toString());
         }
     }
 
