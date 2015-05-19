@@ -35,13 +35,13 @@ public final class ApkInstaller extends WorkFlowStage {
         String apk_name = mConfig.getApkName();
         try {
             // prepare folders on both end
-            Path logPath = Files.createDirectories(path(mConfig.getOutdirPath(), "logs"));
+            Path logPath = Files.createDirectories(path(mConfig.getLogsDir()));
             mAdbHelper.shell("mkdir", "-p", ANDROID_LOG_DIR);
             // dump logcat to remote folder
             mAdbHelper.logcat("-d", "-v", "time", "-f",
                     ANDROID_LOG_DIR + String.format(LOGFILE_TEMPLATE, apk_name));
             // pull dump file to local folder
-            mAdbHelper.exec("pull", ANDROID_LOG_DIR + String.format(LOGFILE_TEMPLATE, apk_name),
+            mAdbHelper.pull(ANDROID_LOG_DIR + String.format(LOGFILE_TEMPLATE, apk_name),
                     logPath.resolve(String.format(LOGFILE_TEMPLATE, apk_name)).toString());
         } catch (InterruptedException | IOException e) {
             fireOnLogOutput(logger, Level.SEVERE, "Error occured while clearing logcat for "
@@ -89,7 +89,7 @@ public final class ApkInstaller extends WorkFlowStage {
                 apkPath = injectedApkPath.getAbsolutePath();
             }
         }
-        return new ProcessBuilder().command(mAdbHelper.getAdbPath(), "install", apkPath).directory(
+        return new ProcessBuilder().command(mAdbHelper.getExecutablePath(), "install", apkPath).directory(
                 new File(mConfig.getOutdirPath()));
     }
 

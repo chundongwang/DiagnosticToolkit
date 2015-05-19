@@ -14,8 +14,7 @@ import com.microsoft.projecta.tools.workflow.WorkFlowStage;
 import com.microsoft.projecta.tools.workflow.WorkFlowStatus;
 
 public final class FullLaunchManager implements WorkFlowProgressListener {
-    private static Logger logger = Logger.getLogger(FullLaunchManager.class
-            .getSimpleName());
+    private static Logger logger = Logger.getLogger(FullLaunchManager.class.getSimpleName());
 
     private static void failfast(Throwable e) {
         String msg = "FullLaunchManager failfast with " + e.getMessage();
@@ -31,12 +30,16 @@ public final class FullLaunchManager implements WorkFlowProgressListener {
      * @return true if both k is subclass of WorkFlowStage and config allows it to run.
      */
     private static boolean shouldRun(Class<?> k, LaunchConfig config) {
-        if (k == ProvisionVM.class) {
-            return config.shouldProvisionVM();
-        } else if (k == ApkInjection.class) {
-            return config.shouldInject();
-        } else if (WorkFlowStage.class.isAssignableFrom(k)) {
-            return true;
+        if (WorkFlowStage.class.isAssignableFrom(k)) {
+            if (k == ProvisionVM.class) {
+                return config.shouldProvisionVM();
+            } else if (k == ApkInjection.class) {
+                return config.shouldInject();
+            } else if (k == ApkKiller.class) {
+                return config.shouldKillApp();
+            } else {
+                return true;
+            }
         }
         return false;
     }
@@ -50,8 +53,7 @@ public final class FullLaunchManager implements WorkFlowProgressListener {
 
     private boolean mStopped;
 
-    public FullLaunchManager(LaunchConfig config,
-            WorkFlowProgressListener listener) {
+    public FullLaunchManager(LaunchConfig config, WorkFlowProgressListener listener) {
         mConfig = config;
         mListener = listener;
         mCurrentStages = new ArrayList<WorkFlowStage>();
@@ -87,9 +89,8 @@ public final class FullLaunchManager implements WorkFlowProgressListener {
         // 5. App launch (logcat, snapshot)
         // 6. Kill the app
         Class[] steps = {
-                ProvisionVM.class, ApkInjection.class,
-                DeviceConnection.class, ApkInstaller.class, ApkMainLauncher.class,
-                ApkKiller.class
+                ProvisionVM.class, ApkInjection.class, DeviceConnection.class, ApkInstaller.class,
+                ApkMainLauncher.class, ApkKiller.class
         };
         mTotalStages = 0;
         for (Class<?> k : steps) {
@@ -187,8 +188,7 @@ public final class FullLaunchManager implements WorkFlowProgressListener {
     }
 
     @Override
-    public void onCompleted(WorkFlowStage sender, WorkFlowStatus status,
-            WorkFlowResult result) {
+    public void onCompleted(WorkFlowStage sender, WorkFlowStatus status, WorkFlowResult result) {
         mListener.onCompleted(sender, status, result);
         sender.removeListener(this);
 
@@ -208,8 +208,7 @@ public final class FullLaunchManager implements WorkFlowProgressListener {
     }
 
     @Override
-    public void onProgress(WorkFlowStage sender, WorkFlowStatus status,
-            int progress) {
+    public void onProgress(WorkFlowStage sender, WorkFlowStatus status, int progress) {
         mListener.onProgress(sender, status, progress);
     }
 

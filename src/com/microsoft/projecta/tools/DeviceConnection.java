@@ -8,9 +8,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.ArrayList;
 import java.util.Enumeration;
-import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.zip.ZipEntry;
@@ -109,9 +107,7 @@ public final class DeviceConnection extends WorkFlowStage {
     @Override
     protected ProcessBuilder startWorkerProcess() {
         // TODO save the log somewhere?
-        List<String> commands = new ArrayList<String>();
-        commands.add(mConfig.getDeviceIPAddr());
-        return mWcHelper.build(commands);
+        return mWcHelper.build(mConfig.getDeviceIPAddr());
     }
 
     public void unZipAll(File zippedSdk, File unzippedSdkDir) throws ZipException, IOException {

@@ -3,8 +3,6 @@ package com.microsoft.projecta.tools.common;
 
 import java.io.IOException;
 import java.nio.file.Path;
-import java.util.Arrays;
-import java.util.List;
 
 public class CommandHelper {
 
@@ -18,27 +16,53 @@ public class CommandHelper {
     protected Path mExecutablePath;
     protected Path mWorkingDir;
     protected boolean mSuppressNonZeroException;
-    
-    public ProcessBuilder build(List<String> args) {
-        args.add(0, mExecutablePath.toString());
-        ProcessBuilder pb = new ProcessBuilder().command(args.toArray(new String[0])).directory(mWorkingDir.toFile());
+
+    public ProcessBuilder build(String... args) {
+        ProcessBuilder pb = new ProcessBuilder().command(args).directory(mWorkingDir.toFile());
         return pb;
     }
 
-    public void exec(List<String> args) throws InterruptedException, IOException,
+    public void exec(String arg1, String... args) throws InterruptedException, IOException,
             ExecuteException {
-        int exitCode = build(args).start().waitFor();
+        String[] cmds = new String[args.length + 2];
+        cmds[0] = mExecutablePath.toString();
+        cmds[1] = arg1;
+        System.arraycopy(args, 0, cmds, 2, args.length);
+
+        int exitCode = build(cmds).start().waitFor();
         if (exitCode != 0 && !isSuppressNonZeroException()) {
-            throw new ExecuteException("adb " + mCommandName + " failed with exit code: " + exitCode);
+            throw new ExecuteException(mCommandName + " " + arg1 + " failed with exit code: "
+                    + exitCode);
         }
     }
 
-    public void exec(String... args) throws InterruptedException, IOException,
-            ExecuteException {
-        exec(Arrays.asList(args));
+    public void exec(String... args) throws InterruptedException, IOException, ExecuteException {
+        String[] cmds = new String[args.length + 1];
+        cmds[0] = mExecutablePath.toString();
+        System.arraycopy(args, 0, cmds, 1, args.length);
+
+        int exitCode = build(cmds).start().waitFor();
+        if (exitCode != 0 && !isSuppressNonZeroException()) {
+            throw new ExecuteException(mCommandName + " failed with exit code: " + exitCode);
+        }
     }
 
-    public String getAdbPath() {
+    public void exec(String arg) throws InterruptedException, IOException, ExecuteException {
+        String[] cmds = new String[2];
+        cmds[0] = mExecutablePath.toString();
+        cmds[1] = arg;
+
+        int exitCode = build(cmds).start().waitFor();
+        if (exitCode != 0 && !isSuppressNonZeroException()) {
+            throw new ExecuteException(mCommandName + " failed with exit code: " + exitCode);
+        }
+    }
+
+    public String getWorkingDir() {
+        return mWorkingDir.toString();
+    }
+
+    public String getExecutablePath() {
         return mExecutablePath.toString();
     }
 

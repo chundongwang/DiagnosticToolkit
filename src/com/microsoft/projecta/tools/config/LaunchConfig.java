@@ -16,8 +16,7 @@ import com.microsoft.projecta.tools.common.Utils;
 public final class LaunchConfig {
 
     public static final class Builder {
-        private static Logger logger = Logger.getLogger(Builder.class
-                .getSimpleName());
+        private static Logger logger = Logger.getLogger(Builder.class.getSimpleName());
         private LaunchConfig mConfigInstance;
         private Branch mBranch;
 
@@ -77,8 +76,7 @@ public final class LaunchConfig {
             if (mConfigInstance.mOutdirPath == null) {
                 mConfigInstance.mOutdirPath = System.getProperty("user.dir");
             }
-            logger.fine(String.format("Launch config loaded as\n%s",
-                    mConfigInstance));
+            logger.fine(String.format("Launch config loaded as\n%s", mConfigInstance));
             return mConfigInstance;
         }
 
@@ -88,8 +86,7 @@ public final class LaunchConfig {
                 String first_line = null;
                 BufferedReader reader = null;
                 try {
-                    reader = new BufferedReader(
-                            new FileReader(latest_file_path));
+                    reader = new BufferedReader(new FileReader(latest_file_path));
                     first_line = reader.readLine();
                     reader.close();
                 } catch (FileNotFoundException e) {
@@ -129,6 +126,7 @@ public final class LaunchConfig {
             return this;
         }
     }
+
     private String mBuildDropPath;
     private String mTakehomeScriptPath;
     private String mSdkToolsPath;
@@ -142,13 +140,14 @@ public final class LaunchConfig {
     private String mStartupActivity;
     private boolean mShouldProvisionVM;
     private boolean mShouldInject;
-
     private boolean mShouldTakeSnapshot;
+    private boolean mShouldKillApp;
 
     private LaunchConfig() {
         mShouldProvisionVM = false;
         mShouldInject = true;
-        mShouldTakeSnapshot = true;
+        mShouldTakeSnapshot = false;
+        mShouldKillApp = false;
     }
 
     public String getActivityToLaunch() {
@@ -256,8 +255,25 @@ public final class LaunchConfig {
         return mTakehomeScriptPath;
     }
 
+    /**
+     * Get directory for putting temporary files
+     * 
+     * @return
+     */
     public String getTmpDir() {
         return Paths.get(getOutdirPath(), "tmp").toString();
+    }
+
+    /**
+     * Get directory for putting log files
+     * 
+     * @return
+     */
+    public String getLogsDir() {
+        if (this.hasOriginApkPath()) {
+            return Paths.get(getOutdirPath(), "logs", this.getApkName()).toString();
+        }
+        return null;
     }
 
     /**
@@ -336,7 +352,7 @@ public final class LaunchConfig {
     public void setInjectionScriptPath(String injectionScriptPath) {
         mInjectionScriptPath = injectionScriptPath;
     }
-    
+
     /**
      * @param originApkPath the originApkPath to set
      */
@@ -357,7 +373,7 @@ public final class LaunchConfig {
     public void setSdkToolsPath(String sdkToolsPath) {
         mSdkToolsPath = sdkToolsPath;
     }
-    
+
     /**
      * @param shouldInject the shouldInject to set
      */
@@ -392,7 +408,7 @@ public final class LaunchConfig {
     public void setTakehomeScriptPath(String takehomeScriptPath) {
         mTakehomeScriptPath = takehomeScriptPath;
     }
-    
+
     /**
      * @param unzippedSdkToolsPath the unzippedSdkToolsPath to set
      */
@@ -421,33 +437,44 @@ public final class LaunchConfig {
         return mShouldTakeSnapshot;
     }
 
+    /**
+     * @return the shouldKillApp
+     */
+    public boolean shouldKillApp() {
+        return mShouldKillApp;
+    }
+
+    /**
+     * @param shouldKillApp the shouldKillApp to set
+     */
+    public void setShouldKillApp(boolean shouldKillApp) {
+        mShouldKillApp = shouldKillApp;
+    }
+
     public String toString() {
         StringBuilder builder = new StringBuilder();
         builder.append(String.format("Build Drop Path=%s", mBuildDropPath));
         builder.append('\n');
-        builder.append(String.format("Takehome Script Path=%s",
-                mTakehomeScriptPath));
+        builder.append(String.format("Takehome Script Path=%s", mTakehomeScriptPath));
         builder.append('\n');
         builder.append(String.format("Sdk Tools Path=%s", mSdkToolsPath));
         builder.append('\n');
-        builder.append(String.format("Injection Script Path=%s",
-                mInjectionScriptPath));
+        builder.append(String.format("Injection Script Path=%s", mInjectionScriptPath));
         builder.append('\n');
-        builder.append(String.format("Target Device IP Address=%s",
-                mDeviceIPAddr));
+        builder.append(String.format("Target Device IP Address=%s", mDeviceIPAddr));
         builder.append('\n');
         builder.append(String.format("Origin Apk Path=%s", mOriginApkPath));
         builder.append('\n');
         builder.append(String.format("Output Dir Path=%s", mOutdirPath));
         builder.append('\n');
-        builder.append(String.format("Should Provision VM? %s",
-                String.valueOf(mShouldProvisionVM)));
+        builder.append(String.format("Should Provision VM? %s", String.valueOf(mShouldProvisionVM)));
         builder.append('\n');
-        builder.append(String.format("Should Inject? %s",
-                String.valueOf(mShouldInject)));
+        builder.append(String.format("Should Inject? %s", String.valueOf(mShouldInject)));
         builder.append('\n');
         builder.append(String.format("Should Take Snapshot? %s",
                 String.valueOf(mShouldTakeSnapshot)));
+        builder.append('\n');
+        builder.append(String.format("Should Kill App? %s", String.valueOf(mShouldKillApp)));
         return builder.toString();
     }
 }

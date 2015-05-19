@@ -70,6 +70,7 @@ public class LauncherWindow {
     private Button mBtnTakeScreenshot;
     private Combo mComboActivities;
     private Label mLblPackagename;
+    private Button mBtnKillApp;
 
     private Button mBtnGo;
 
@@ -384,6 +385,7 @@ public class LauncherWindow {
         mBtnInjectApk.setText("Inject Apk");
 
         mBtnTakeScreenshot = new Button(composite, SWT.CHECK);
+        mBtnTakeScreenshot.setEnabled(false);
         mBtnTakeScreenshot.addSelectionListener(new SelectionAdapter() {
             @Override
             public void widgetSelected(SelectionEvent e) {
@@ -391,6 +393,15 @@ public class LauncherWindow {
             }
         });
         mBtnTakeScreenshot.setText("Take screenshot");
+        
+        mBtnKillApp = new Button(composite, SWT.CHECK);
+        mBtnKillApp.addSelectionListener(new SelectionAdapter() {
+            @Override
+            public void widgetSelected(SelectionEvent e) {
+                mConfig.setShouldKillApp(((Button) e.widget).getSelection());
+            }
+        });
+        mBtnKillApp.setText("Kill After Launch");
         scrolledComposite_advance.setContent(composite_advance_inner);
         scrolledComposite_advance.setMinSize(composite_advance_inner.computeSize(SWT.DEFAULT,
                 SWT.DEFAULT));
@@ -488,6 +499,7 @@ public class LauncherWindow {
         mBtnProvisionVm.setSelection(mConfig.shouldProvisionVM());
         mBtnInjectApk.setSelection(mConfig.shouldInject());
         mBtnTakeScreenshot.setSelection(mConfig.shouldTakeSnapshot());
+        mBtnKillApp.setSelection(mConfig.shouldKillApp());
         if (mConfig.hasApkPackageInfo()) {
             mLblPackagename.setText(mConfig.getApkPackageName());
             List<String> activities = mConfig.getApkActivities();

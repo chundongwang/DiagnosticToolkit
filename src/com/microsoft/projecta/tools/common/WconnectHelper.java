@@ -5,8 +5,6 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.ArrayList;
-import java.util.List;
 
 public class WconnectHelper extends CommandHelper {
 
@@ -15,15 +13,11 @@ public class WconnectHelper extends CommandHelper {
     }
 
     public void killServer() throws InterruptedException, IOException, ExecuteException {
-        List<String> commands = new ArrayList<String>();
-        commands.add("kill-server");
-        exec(commands);
+        exec("kill-server");
     }
 
     public void connect(String ipaddr) throws InterruptedException, IOException, ExecuteException {
-        List<String> commands = new ArrayList<String>();
-        commands.add(ipaddr);
-        exec(commands);
+        exec(ipaddr);
     }
 
     public static WconnectHelper getInstance(String sdkTools, String workingDir) throws IOException {

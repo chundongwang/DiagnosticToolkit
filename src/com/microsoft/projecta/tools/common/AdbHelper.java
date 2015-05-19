@@ -5,8 +5,6 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.Arrays;
-import java.util.List;
 
 public class AdbHelper extends CommandHelper {
 
@@ -15,15 +13,15 @@ public class AdbHelper extends CommandHelper {
     }
 
     public void logcat(String... args) throws InterruptedException, IOException, ExecuteException {
-        List<String> commands = Arrays.asList(args);
-        commands.add(0, "logcat");
-        exec(commands);
+        exec("logcat", args);
     }
 
     public void shell(String... args) throws InterruptedException, IOException, ExecuteException {
-        List<String> commands = Arrays.asList(args);
-        commands.add(0, "shell");
-        exec(commands);
+        exec("shell", args);
+    }
+
+    public void pull(String... args) throws InterruptedException, IOException, ExecuteException {
+        exec("pull", args);
     }
 
     public static AdbHelper getInstance(String sdkTools, String workingDir) throws IOException {

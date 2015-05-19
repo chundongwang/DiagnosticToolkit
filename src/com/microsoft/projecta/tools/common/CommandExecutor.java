@@ -130,13 +130,6 @@ public final class CommandExecutor {
         }
     }
 
-    private synchronized void fireOnLogOutput(Logger logger, Level level, String message,
-            Throwable e) {
-        if (mListener != null) {
-            mListener.onLogOutput(logger, level, message, e);
-        }
-    }
-
     private synchronized void fireOnLogOutput(String message) {
         if (mListener != null) {
             mListener.onLogOutput(getLogger(), Level.INFO, message, null);

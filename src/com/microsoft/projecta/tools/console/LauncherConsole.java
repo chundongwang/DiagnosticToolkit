@@ -6,6 +6,8 @@ import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.nio.file.Paths;
 import java.util.List;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 import org.xmlpull.v1.XmlPullParserException;
 
@@ -15,6 +17,10 @@ import com.microsoft.projecta.tools.ApkKiller;
 import com.microsoft.projecta.tools.ApkMainLauncher;
 import com.microsoft.projecta.tools.DeviceConnection;
 import com.microsoft.projecta.tools.common.AndroidManifestInfo;
+import com.microsoft.projecta.tools.common.CommandExecutor;
+import com.microsoft.projecta.tools.common.ExecuteException;
+import com.microsoft.projecta.tools.common.TshellHelper;
+import com.microsoft.projecta.tools.common.Loggable;
 import com.microsoft.projecta.tools.config.Branch;
 import com.microsoft.projecta.tools.config.LaunchConfig;
 import com.microsoft.projecta.tools.workflow.WorkFlowProgressListener;
@@ -51,9 +57,33 @@ public class LauncherConsole implements WorkFlowProgressListener {
         return stageStart;
     }
 
-    public static void main(String[] args) {
-        new LauncherConsole().kickoff(args[args.length - 1]);
+    public static void main(String[] args) throws ExecuteException, InterruptedException {
+        try {
+            TshellHelper tshell = TshellHelper.getInstance(Paths
+                    .get(System.getProperty("user.dir")).resolve("logs").toString());
+            // tshell.grabLogs();
+
+            CommandExecutor executor = new CommandExecutor(new Loggable() {
+                @Override
+                public void onLogOutput(Logger logger, Level level, String message, Throwable e) {
+                    System.out.println(message);
+                    if (e != null) {
+                        e.printStackTrace(System.err);
+                    }
+                }
+            });
+
+            executor.execute(tshell.build(tshell.getExecutablePath(), "-Command", String.format(
+                    TshellHelper.EXEC_PS1_TEMPLATE, tshell.getWorkingDir(), TshellHelper.GRABLOGS)));
+
+        } catch (IOException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        }
+
+        // new LauncherConsole().kickoff(args[args.length - 1]);
     }
+
     private LaunchConfig mConfig;
     private boolean mCompleted;
 
