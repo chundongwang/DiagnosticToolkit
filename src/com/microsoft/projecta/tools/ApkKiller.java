@@ -10,8 +10,7 @@ import com.microsoft.projecta.tools.workflow.WorkFlowSingleProcStage;
 import com.microsoft.projecta.tools.workflow.WorkFlowStatus;
 
 public class ApkKiller extends WorkFlowSingleProcStage {
-    private static Logger logger = Logger.getLogger(ApkKiller.class
-            .getSimpleName());
+    private static Logger logger = Logger.getLogger(ApkKiller.class.getSimpleName());
     private LaunchConfig mConfig;
 
     public ApkKiller(LaunchConfig config) {
@@ -29,13 +28,10 @@ public class ApkKiller extends WorkFlowSingleProcStage {
      */
     @Override
     protected ProcessBuilder startWorkerProcess() throws IOException {
-        return new ProcessBuilder()
-                .command(
-                        join(mConfig.getUnzippedSdkToolsPath(), "SDK_19.1.0", "platform-tools",
-                                "adb.exe"),
-                        "shell", "am", "kill",
-                        mConfig.getOriginApkPath())
-                .directory(new File(mConfig.getOutdirPath()));
+        return new ProcessBuilder().command(
+                join(mConfig.getUnzippedSdkToolsPath(), "SDK_19.1.0", "platform-tools", "adb.exe"),
+                "shell", "am", "kill", mConfig.getApkPackageName()).directory(
+                new File(mConfig.getOutdirPath()));
     }
 
 }

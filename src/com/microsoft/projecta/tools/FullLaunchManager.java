@@ -88,7 +88,7 @@ public final class FullLaunchManager implements WorkFlowProgressListener {
         // 6. Kill the app
         Class[] steps = {
                 ProvisionVM.class, ApkInjection.class,
-                DeviceConnection.class, ApkInstaller.class, ApkLauncher.class,
+                DeviceConnection.class, ApkInstaller.class, ApkMainLauncher.class,
                 ApkKiller.class
         };
         mTotalStages = 0;

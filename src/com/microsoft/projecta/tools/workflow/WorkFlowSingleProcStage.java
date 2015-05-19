@@ -40,6 +40,17 @@ public abstract class WorkFlowSingleProcStage extends WorkFlowStage {
         mWorkerProcDesc = workerProcDesc;
     }
 
+    private static String commandLine(ProcessBuilder pb) {
+        StringBuilder builder = new StringBuilder();
+        for (String cmd : pb.command()) {
+            builder.append(cmd);
+            builder.append(' ');
+        }
+        // last space
+        builder.deleteCharAt(builder.length()-1);
+        return builder.toString();
+    }
+
     @Override
     public void execute() {
         if (mWorkerProc != null) {
@@ -53,6 +64,7 @@ public abstract class WorkFlowSingleProcStage extends WorkFlowStage {
         try {
             // 1. kick off
             ProcessBuilder pb = startWorkerProcess().redirectErrorStream(true);
+            fireOnLogOutput("Starting " + getWorkerProcDesc() + " with " + commandLine(pb));
             mWorkerProc = pb.start();
 
             // 2. monitoring output
@@ -72,7 +84,7 @@ public abstract class WorkFlowSingleProcStage extends WorkFlowStage {
             output_handler.interrupt();
             if (output_handler.isAlive()) {
                 fireOnLogOutput("Waiting for " + getWorkerProcDesc() + " to finish...");
-                output_handler.join();
+                output_handler.join(1000);
             }
             fireOnLogOutput(getWorkerProcDesc() + " exited with " + exit_code);
 

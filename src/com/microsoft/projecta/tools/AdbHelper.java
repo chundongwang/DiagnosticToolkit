@@ -44,11 +44,12 @@ public class AdbHelper {
 
     public void exec(String command, String... args) throws InterruptedException, IOException,
             AdbException {
-        String[] cmd_line = new String[args.length + 1];
+        String[] cmd_line = new String[args.length + 2];
         cmd_line[0] = mAdbPath.toString();
-        System.arraycopy(args, 0, cmd_line, 1, args.length);
-        int exitCode = new ProcessBuilder().command(cmd_line).directory(mWorkingDir.toFile())
-                .start().waitFor();
+        cmd_line[1] = command;
+        System.arraycopy(args, 0, cmd_line, 2, args.length);
+        ProcessBuilder pb = new ProcessBuilder().command(cmd_line).directory(mWorkingDir.toFile());
+        int exitCode = pb.start().waitFor();
         if (exitCode != 0 && !isSuppressNonZeroException()) {
             throw new AdbException("adb " + command + " failed with exit code: " + exitCode);
         }

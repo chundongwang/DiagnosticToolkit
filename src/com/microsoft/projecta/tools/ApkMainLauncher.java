@@ -12,46 +12,50 @@ import com.microsoft.projecta.tools.config.LaunchConfig;
 import com.microsoft.projecta.tools.workflow.WorkFlowSingleProcStage;
 import com.microsoft.projecta.tools.workflow.WorkFlowStatus;
 
-public final class ApkInstaller extends WorkFlowSingleProcStage {
-    private static Logger logger = Logger.getLogger(ApkInstaller.class.getSimpleName());
+public class ApkMainLauncher extends WorkFlowSingleProcStage {
+    private static Logger logger = Logger.getLogger(ApkMainLauncher.class.getSimpleName());
     // need the trailing '/' at the end
     private static String ANDROID_LOG_DIR = "/sdcard/diag/log/";
-    private static String LOGFILE_TEMPLATE = "install-%s.log";
+    private static String LOGFILE_TEMPLATE = "launch-%s.log";
     private LaunchConfig mConfig;
     private AdbHelper mAdbHelper;
 
-    public ApkInstaller(LaunchConfig config) {
-        super(logger.getName(), "adb process to install apk");
+    public ApkMainLauncher(LaunchConfig config) {
+        super(logger.getName(), "adb process to launch the activity");
         mConfig = config;
     }
 
     @Override
     public WorkFlowStatus getStatus() {
-        return WorkFlowStatus.INSTALLED_SUCCESS;
+        return WorkFlowStatus.LAUNCH_SUCCESS;
     }
 
     /**
-     * clear logcat before installing
+     * Clear logcat before launch
      */
     @Override
     protected boolean setup() {
+        boolean result = false;
         try {
+            // even if logcat -c failed, we should still probably keep going
             mAdbHelper = AdbHelper.getInstance(mConfig.getUnzippedSdkToolsPath(),
                     mConfig.getOutdirPath());
-            mAdbHelper.logcat("-c");
+            result = true;
 
+            // clear logcat before launch
+            mAdbHelper.logcat("-c");
         } catch (InterruptedException | IOException e) {
-            fireOnLogOutput(logger, Level.SEVERE, "Error occured while clearing logcat", e);
+            fireOnLogOutput(logger, Level.SEVERE,
+                    "Error occured while parsing AndroidManifest.xml and/or clearing logcat", e);
         } catch (AdbException e) {
             fireOnLogOutput(logger, Level.SEVERE,
                     "Error occured while running adb to clear logcat ", e);
         }
-        // even if logcat -c failed, we should still probably keep going
-        return mAdbHelper != null;
+        return result;
     }
 
     /**
-     * dump logcat after install
+     * dump logcat after launch
      */
     @Override
     protected void cleanup() {
@@ -76,18 +80,31 @@ public final class ApkInstaller extends WorkFlowSingleProcStage {
     }
 
     /**
-     * adb install <apk_file>
+     * Do some pre-check
+     */
+    @Override
+    public void execute() {
+        super.execute();
+        try {
+            Thread.sleep(3000);
+        } catch (InterruptedException e) {
+            // Cancelled by user
+            fireOnLogOutput("Interupted while waiting after executed " + getWorkerProcDesc());
+        }
+    }
+
+    /**
+     * adb shell am start <INTENT> <INTENT> = -a <ACTION> -c <CATEGORY> -n <COMPONENT> For example
+     * <INTENT> = -a android.intent.action.MAIN -c android.intent.category.LAUNCHER -n
+     * com.kokteyl.goal/com.kokteyl.content.Splash
      */
     @Override
     protected ProcessBuilder startWorkerProcess() throws IOException {
-        String apkPath = mConfig.getOriginApkPath();
-        if (mConfig.hasInjectedApkPath()) {
-            File injectedApkPath = new File(mConfig.getInjectedApkPath());
-            if (injectedApkPath.exists() && injectedApkPath.isFile()) {
-                apkPath = injectedApkPath.getAbsolutePath();
-            }
-        }
-        return new ProcessBuilder().command(mAdbHelper.getAdbPath(), "install", apkPath).directory(
+        return new ProcessBuilder().command(
+                join(mConfig.getUnzippedSdkToolsPath(), "SDK_19.1.0", "platform-tools", "adb.exe"),
+                "shell", "am", "start", "-a", "android.intent.action.MAIN", "-c",
+                "android.intent.category.LAUNCHER", "-n",
+                mConfig.getApkPackageName() + "/" + mConfig.getActivityToLaunch()).directory(
                 new File(mConfig.getOutdirPath()));
     }
 

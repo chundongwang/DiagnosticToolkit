@@ -1,11 +1,20 @@
 
 package com.microsoft.projecta.tools.console;
 
+import java.io.IOException;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.nio.file.Paths;
+import java.util.List;
 
-import com.microsoft.projecta.tools.ApkLauncher;
+import org.xmlpull.v1.XmlPullParserException;
+
+import com.microsoft.projecta.tools.AndroidManifestInfo;
+import com.microsoft.projecta.tools.ApkInjection;
+import com.microsoft.projecta.tools.ApkInstaller;
+import com.microsoft.projecta.tools.ApkKiller;
+import com.microsoft.projecta.tools.ApkMainLauncher;
+import com.microsoft.projecta.tools.DeviceConnection;
 import com.microsoft.projecta.tools.config.Branch;
 import com.microsoft.projecta.tools.config.LaunchConfig;
 import com.microsoft.projecta.tools.workflow.WorkFlowProgressListener;
@@ -41,8 +50,7 @@ public class LauncherConsole implements WorkFlowProgressListener {
                     stageStart = stageCurrent;
                 }
             } catch (NoSuchMethodException | SecurityException | InstantiationException
-                    | IllegalAccessException | IllegalArgumentException
-                    | InvocationTargetException e) {
+                    | IllegalAccessException | IllegalArgumentException | InvocationTargetException e) {
                 System.err.println("Build stages chain failed.");
                 e.printStackTrace(System.err);
             }
@@ -75,17 +83,29 @@ public class LauncherConsole implements WorkFlowProgressListener {
         mConfig.setInjectionScriptPath("z:\\build\\tools\\autoInjection");
         mConfig.setDeviceIPAddr("10.81.209.142");
         mConfig.setOriginApkPath(apkPath);
-        mConfig.setUnzippedSdkToolsPath("C:\\tools\\ProjectA-windows");
+        // mConfig.setUnzippedSdkToolsPath("C:\\tools\\ProjectA-windows");
 
         System.out.println("==========");
         System.out.println(mConfig.toString());
         System.out.println("==========");
-        // WorkFlowStage startStage_full = buildStages(mConfig, ApkInjection.class,
-        // DeviceConnection.class, ApkInstaller.class, ApkLauncher.class,
-        // ApkKiller.class);
-        WorkFlowStage startStage_single = buildStages(mConfig, ApkLauncher.class);
-        startStage_single.addListener(this);
-        startStage_single.start();
+
+        // parse AndroidManifest.xml
+        System.out.println("Parsing AndroidManifest.xml...");
+        try {
+            AndroidManifestInfo info = AndroidManifestInfo.parseAndroidManifest(mConfig
+                    .getOriginApkPath());
+            mConfig.setApkPackageInfo(info);
+        } catch (IOException | XmlPullParserException e) {
+            System.err.println("AndroidManifest parsing failed...");
+            e.printStackTrace(System.err);
+            throw new RuntimeException("AndroidManifest parsing failed.", e);
+        }
+
+        WorkFlowStage startStage = buildStages(mConfig, ApkInjection.class, DeviceConnection.class,
+                ApkInstaller.class, ApkMainLauncher.class, ApkKiller.class);
+        // WorkFlowStage startStage = buildStages(mConfig, ApkMainLauncher.class);
+        startStage.addListener(this);
+        startStage.start();
 
         try {
             mThread.start();
@@ -100,9 +120,19 @@ public class LauncherConsole implements WorkFlowProgressListener {
             final WorkFlowResult result) {
         System.out.println(String.format("[%s]%s completed with %s", sender.getName(),
                 stage.toString(), result.toString()));
-        if (result == WorkFlowResult.FAILED || result == WorkFlowResult.CANCELLED
-                || stage == WorkFlowStatus.KILLED_SUCCESS) {
+        if (result == WorkFlowResult.FAILED || result == WorkFlowResult.CANCELLED) {
             mCompleted = true;
+        }
+        if (result == WorkFlowResult.SUCCESS) {
+            if (stage == WorkFlowStatus.KILLED_SUCCESS) {
+                mCompleted = true;
+            } else {
+                List<WorkFlowStage> nextStages = sender.getNextSteps();
+                for (WorkFlowStage nextStage : nextStages) {
+                    nextStage.addListener(this);
+                    nextStage.start();
+                }
+            }
         }
     }
 

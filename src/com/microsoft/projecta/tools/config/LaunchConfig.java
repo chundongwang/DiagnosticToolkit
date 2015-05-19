@@ -8,7 +8,10 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.List;
 import java.util.logging.Logger;
+
+import com.microsoft.projecta.tools.AndroidManifestInfo;
 
 public final class LaunchConfig {
 
@@ -136,7 +139,8 @@ public final class LaunchConfig {
     private String mOutdirPath;
     private String mInjectedApkPath;
     private String mUnzippedSdkToolsPath;
-    private String mApkPackageName;
+    private AndroidManifestInfo mApkPackageInfo;
+    private String mStartupActivity;
     private boolean mShouldProvisionVM;
     private boolean mShouldInject;
     private boolean mShouldTakeSnapshot;
@@ -335,26 +339,78 @@ public final class LaunchConfig {
     public boolean shouldTakeSnapshot() {
         return mShouldTakeSnapshot;
     }
+    
+    /**
+     * @return the activity list
+     */
+    public List<String> getApkActivities() {
+        if (hasApkPackageInfo()) {
+            return mApkPackageInfo.getActivities();
+        }
+        return null;
+    }
+
+    /**
+     * @return the main activity
+     */
+    public String getApkMainActivity() {
+        if (hasApkPackageInfo()) {
+            return mApkPackageInfo.getMainActivity();
+        }
+        return null;
+    }
 
     /**
      * @return the apkPackageName
      */
     public String getApkPackageName() {
-        return mApkPackageName;
+        if (hasApkPackageInfo()) {
+            return mApkPackageInfo.getPackageName();
+        }
+        return null;
     }
-
+    
     /**
-     * @param apkPackageName the apkPackageName to set
+     * @param info AndroidManifestInfo of the apk
      */
-    public void setApkPackageName(String apkPackageName) {
-        mApkPackageName = apkPackageName;
+    public void setApkPackageInfo(AndroidManifestInfo info) {
+        mApkPackageInfo = info;
     }
 
     /**
      * @return if has apk package name
      */
-    public boolean hasApkPackageName() {
-        return mApkPackageName != null && mApkPackageName.length() > 0;
+    public boolean hasApkPackageInfo() {
+        return mApkPackageInfo != null;
+    }
+
+    /**
+     * @return the startupActivity
+     */
+    public String getStartupActivity() {
+        return mStartupActivity;
+    }
+
+    /**
+     * @param startupActivity the startupActivity to set
+     */
+    public void setStartupActivity(String startupActivity) {
+        mStartupActivity = startupActivity;
+    }
+
+    /**
+     * @return if startupActivity is specified
+     */
+    public boolean hasStartupActivity() {
+        return mStartupActivity != null;
+    }
+    
+    public String getActivityToLaunch() {
+        if (hasStartupActivity()) {
+            return getStartupActivity();
+        } else {
+            return getApkMainActivity();
+        }
     }
 
     /**
