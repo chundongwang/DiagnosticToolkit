@@ -17,26 +17,18 @@ import android.util.TypedValue;
 public class AndroidManifestInfo {
     private static final String ANDROIDMANIFEST_XML = "AndroidManifest.xml";
 
-    private String mPackageName;
-    private List<String> mActivities;
-    private String mMainActivity;
+    private static final float RADIX_MULTS[] = {
+            0.00390625F, 3.051758E-005F, 1.192093E-007F, 4.656613E-010F
+    };
+    private static final String DIMENSION_UNITS[] = {
+            "px", "dip", "sp", "pt", "in", "mm", "", ""
+    };
+    private static final String FRACTION_UNITS[] = {
+            "%", "%p", "", "", "", "", "", ""
+    };
 
-    private AndroidManifestInfo() {
-        mActivities = new ArrayList<String>();
-    }
-
-    private static String getNamespacePrefix(String prefix) {
-        if (prefix == null || prefix.length() == 0) {
-            return "";
-        }
-        return prefix + ":";
-    }
-
-    private static String getPackage(int id) {
-        if (id >>> 24 == 1) {
-            return "android:";
-        }
-        return "";
+    public static float complexToFloat(int complex) {
+        return (float) (complex & 0xFFFFFF00) * RADIX_MULTS[(complex >> 4) & 3];
     }
 
     private static String getAttributeValue(AXmlResourceParser parser, int index) {
@@ -77,19 +69,19 @@ public class AndroidManifestInfo {
         return String.format("<0x%X, type 0x%02X>", data, type);
     }
 
-    public static float complexToFloat(int complex) {
-        return (float) (complex & 0xFFFFFF00) * RADIX_MULTS[(complex >> 4) & 3];
+    private static String getNamespacePrefix(String prefix) {
+        if (prefix == null || prefix.length() == 0) {
+            return "";
+        }
+        return prefix + ":";
     }
 
-    private static final float RADIX_MULTS[] = {
-            0.00390625F, 3.051758E-005F, 1.192093E-007F, 4.656613E-010F
-    };
-    private static final String DIMENSION_UNITS[] = {
-            "px", "dip", "sp", "pt", "in", "mm", "", ""
-    };
-    private static final String FRACTION_UNITS[] = {
-            "%", "%p", "", "", "", "", "", ""
-    };
+    private static String getPackage(int id) {
+        if (id >>> 24 == 1) {
+            return "android:";
+        }
+        return "";
+    }
 
     public static AndroidManifestInfo parseAndroidManifest(String apkPath) throws IOException,
             XmlPullParserException {
@@ -166,11 +158,19 @@ public class AndroidManifestInfo {
         return helper;
     }
 
+    private String mPackageName;
+    private List<String> mActivities;
+    private String mMainActivity;
+
+    private AndroidManifestInfo() {
+        mActivities = new ArrayList<String>();
+    }
+
     /**
-     * @return the packageName
+     * @return the list of all activities
      */
-    public String getPackageName() {
-        return mPackageName;
+    public List<String> getActivities() {
+        return mActivities;
     }
 
     /**
@@ -181,9 +181,9 @@ public class AndroidManifestInfo {
     }
 
     /**
-     * @return the list of all activities
+     * @return the packageName
      */
-    public List<String> getActivities() {
-        return mActivities;
+    public String getPackageName() {
+        return mPackageName;
     }
 }

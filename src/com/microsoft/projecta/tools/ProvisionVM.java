@@ -2,14 +2,13 @@
 package com.microsoft.projecta.tools;
 
 import java.io.File;
-import java.io.IOException;
 import java.util.logging.Logger;
 
 import com.microsoft.projecta.tools.config.LaunchConfig;
-import com.microsoft.projecta.tools.workflow.WorkFlowSingleProcStage;
+import com.microsoft.projecta.tools.workflow.WorkFlowStage;
 import com.microsoft.projecta.tools.workflow.WorkFlowStatus;
 
-public class ProvisionVM extends WorkFlowSingleProcStage {
+public class ProvisionVM extends WorkFlowStage {
     private static Logger logger = Logger.getLogger(ProvisionVM.class
             .getSimpleName());
     private LaunchConfig mConfig;
@@ -28,7 +27,7 @@ public class ProvisionVM extends WorkFlowSingleProcStage {
      * powershell.exe <provision_script>
      */
     @Override
-    protected ProcessBuilder startWorkerProcess() throws IOException {
+    protected ProcessBuilder startWorkerProcess() {
         return new ProcessBuilder()
                 .command("powershell.exe",
                         mConfig.getOriginApkPath())

@@ -130,6 +130,20 @@ public final class LaunchConfig {
         }
     }
 
+    /**
+     * Getting file name without extension.
+     * 
+     * @param path Path to the file
+     * @return
+     */
+    private static String getNameWithoutExtension(Path path) {
+        String fileName = path.getFileName().toString();
+        int pos = fileName.lastIndexOf(".");
+        if (pos > 0) {
+            fileName = fileName.substring(0, pos);
+        }
+        return fileName;
+    }
     private String mBuildDropPath;
     private String mTakehomeScriptPath;
     private String mSdkToolsPath;
@@ -143,12 +157,55 @@ public final class LaunchConfig {
     private String mStartupActivity;
     private boolean mShouldProvisionVM;
     private boolean mShouldInject;
+
     private boolean mShouldTakeSnapshot;
 
     private LaunchConfig() {
         mShouldProvisionVM = false;
         mShouldInject = true;
         mShouldTakeSnapshot = true;
+    }
+
+    public String getActivityToLaunch() {
+        if (hasStartupActivity()) {
+            return getStartupActivity();
+        } else {
+            return getApkMainActivity();
+        }
+    }
+
+    /**
+     * @return the activity list
+     */
+    public List<String> getApkActivities() {
+        if (hasApkPackageInfo()) {
+            return mApkPackageInfo.getActivities();
+        }
+        return null;
+    }
+
+    /**
+     * @return the main activity
+     */
+    public String getApkMainActivity() {
+        if (hasApkPackageInfo()) {
+            return mApkPackageInfo.getMainActivity();
+        }
+        return null;
+    }
+
+    public String getApkName() {
+        return getNameWithoutExtension(Paths.get(mOriginApkPath));
+    }
+
+    /**
+     * @return the apkPackageName
+     */
+    public String getApkPackageName() {
+        if (hasApkPackageInfo()) {
+            return mApkPackageInfo.getPackageName();
+        }
+        return null;
     }
 
     /**
@@ -201,10 +258,21 @@ public final class LaunchConfig {
     }
 
     /**
+     * @return the startupActivity
+     */
+    public String getStartupActivity() {
+        return mStartupActivity;
+    }
+
+    /**
      * @return the takehomeScriptPath
      */
     public String getTakehomeScriptPath() {
         return mTakehomeScriptPath;
+    }
+
+    public String getTmpDir() {
+        return Paths.get(getOutdirPath(), "tmp").toString();
     }
 
     /**
@@ -212,6 +280,20 @@ public final class LaunchConfig {
      */
     public String getUnzippedSdkToolsPath() {
         return mUnzippedSdkToolsPath;
+    }
+
+    /**
+     * @return if has apk package name
+     */
+    public boolean hasApkPackageInfo() {
+        return mApkPackageInfo != null;
+    }
+
+    /**
+     * @return if has injected apk file
+     */
+    public boolean hasInjectedApkPath() {
+        return mInjectedApkPath != null && mInjectedApkPath.length() > 0;
     }
 
     /**
@@ -229,10 +311,17 @@ public final class LaunchConfig {
     }
 
     /**
-     * @return if has injected apk file
+     * @return if startupActivity is specified
      */
-    public boolean hasInjectedApkPath() {
-        return mInjectedApkPath != null && mInjectedApkPath.length() > 0;
+    public boolean hasStartupActivity() {
+        return mStartupActivity != null;
+    }
+
+    /**
+     * @param info AndroidManifestInfo of the apk
+     */
+    public void setApkPackageInfo(AndroidManifestInfo info) {
+        mApkPackageInfo = info;
     }
 
     /**
@@ -262,7 +351,7 @@ public final class LaunchConfig {
     public void setInjectionScriptPath(String injectionScriptPath) {
         mInjectionScriptPath = injectionScriptPath;
     }
-
+    
     /**
      * @param originApkPath the originApkPath to set
      */
@@ -283,7 +372,7 @@ public final class LaunchConfig {
     public void setSdkToolsPath(String sdkToolsPath) {
         mSdkToolsPath = sdkToolsPath;
     }
-
+    
     /**
      * @param shouldInject the shouldInject to set
      */
@@ -306,12 +395,19 @@ public final class LaunchConfig {
     }
 
     /**
+     * @param startupActivity the startupActivity to set
+     */
+    public void setStartupActivity(String startupActivity) {
+        mStartupActivity = startupActivity;
+    }
+
+    /**
      * @param takehomeScriptPath the takehomeScriptPath to set
      */
     public void setTakehomeScriptPath(String takehomeScriptPath) {
         mTakehomeScriptPath = takehomeScriptPath;
     }
-
+    
     /**
      * @param unzippedSdkToolsPath the unzippedSdkToolsPath to set
      */
@@ -338,102 +434,6 @@ public final class LaunchConfig {
      */
     public boolean shouldTakeSnapshot() {
         return mShouldTakeSnapshot;
-    }
-    
-    /**
-     * @return the activity list
-     */
-    public List<String> getApkActivities() {
-        if (hasApkPackageInfo()) {
-            return mApkPackageInfo.getActivities();
-        }
-        return null;
-    }
-
-    /**
-     * @return the main activity
-     */
-    public String getApkMainActivity() {
-        if (hasApkPackageInfo()) {
-            return mApkPackageInfo.getMainActivity();
-        }
-        return null;
-    }
-
-    /**
-     * @return the apkPackageName
-     */
-    public String getApkPackageName() {
-        if (hasApkPackageInfo()) {
-            return mApkPackageInfo.getPackageName();
-        }
-        return null;
-    }
-    
-    /**
-     * @param info AndroidManifestInfo of the apk
-     */
-    public void setApkPackageInfo(AndroidManifestInfo info) {
-        mApkPackageInfo = info;
-    }
-
-    /**
-     * @return if has apk package name
-     */
-    public boolean hasApkPackageInfo() {
-        return mApkPackageInfo != null;
-    }
-
-    /**
-     * @return the startupActivity
-     */
-    public String getStartupActivity() {
-        return mStartupActivity;
-    }
-
-    /**
-     * @param startupActivity the startupActivity to set
-     */
-    public void setStartupActivity(String startupActivity) {
-        mStartupActivity = startupActivity;
-    }
-
-    /**
-     * @return if startupActivity is specified
-     */
-    public boolean hasStartupActivity() {
-        return mStartupActivity != null;
-    }
-    
-    public String getActivityToLaunch() {
-        if (hasStartupActivity()) {
-            return getStartupActivity();
-        } else {
-            return getApkMainActivity();
-        }
-    }
-
-    /**
-     * Getting file name without extension.
-     * 
-     * @param path Path to the file
-     * @return
-     */
-    private static String getNameWithoutExtension(Path path) {
-        String fileName = path.getFileName().toString();
-        int pos = fileName.lastIndexOf(".");
-        if (pos > 0) {
-            fileName = fileName.substring(0, pos);
-        }
-        return fileName;
-    }
-
-    public String getApkName() {
-        return getNameWithoutExtension(Paths.get(mOriginApkPath));
-    }
-
-    public String getTmpDir() {
-        return Paths.get(getOutdirPath(), "tmp").toString();
     }
 
     public String toString() {

@@ -16,23 +16,11 @@ import java.util.logging.Logger;
 import com.microsoft.projecta.tools.config.LaunchConfig;
 import com.microsoft.projecta.tools.config.OS;
 import com.microsoft.projecta.tools.workflow.WorkFlowResult;
-import com.microsoft.projecta.tools.workflow.WorkFlowSingleProcStage;
+import com.microsoft.projecta.tools.workflow.WorkFlowStage;
 import com.microsoft.projecta.tools.workflow.WorkFlowStatus;
 
-public final class ApkInjection extends WorkFlowSingleProcStage {
+public final class ApkInjection extends WorkFlowStage {
     private static Logger logger = Logger.getLogger(ApkInjection.class.getSimpleName());
-    private LaunchConfig mConfig;
-
-    public ApkInjection(LaunchConfig config) {
-        super(logger.getName(), "jython process with injection script");
-        mConfig = config;
-    }
-
-    @Override
-    public WorkFlowStatus getStatus() {
-        return WorkFlowStatus.INJECTED_GPINTEROP;
-    }
-
     /**
      * Best effort platform independent recursive deletion.
      * 
@@ -43,6 +31,17 @@ public final class ApkInjection extends WorkFlowSingleProcStage {
         if (file.exists()) {
             if (file.isDirectory()) {
                 Files.walkFileTree(path, new SimpleFileVisitor<Path>() {
+                    @Override
+                    public FileVisitResult postVisitDirectory(Path dir, IOException e)
+                            throws IOException {
+                        if (e == null) {
+                            Files.delete(dir);
+                            return FileVisitResult.CONTINUE;
+                        } else {
+                            throw e;
+                        }
+                    }
+
                     @Override
                     public FileVisitResult visitFile(Path file, BasicFileAttributes attrs)
                             throws IOException {
@@ -59,23 +58,19 @@ public final class ApkInjection extends WorkFlowSingleProcStage {
                         Files.delete(file);
                         return FileVisitResult.CONTINUE;
                     }
-
-                    @Override
-                    public FileVisitResult postVisitDirectory(Path dir, IOException e)
-                            throws IOException {
-                        if (e == null) {
-                            Files.delete(dir);
-                            return FileVisitResult.CONTINUE;
-                        } else {
-                            throw e;
-                        }
-                    }
                 });
             } else {
                 // Not a directory, try deleting it directly
                 Files.delete(path);
             }
         }
+    }
+
+    private LaunchConfig mConfig;
+
+    public ApkInjection(LaunchConfig config) {
+        super(logger.getName(), "jython process with injection script");
+        mConfig = config;
     }
 
     /**
@@ -120,6 +115,28 @@ public final class ApkInjection extends WorkFlowSingleProcStage {
             logger.info("Delete " + target + " recursively with platform independent code.");
             deleteHelper(target);
         }
+    }
+
+    /**
+     * Do some pre-check
+     */
+    @Override
+    public void execute() {
+        if (mConfig.hasInjectedApkPath()) {
+            // skip execution as we've injected the exact apk before
+            fireOnCompleted(WorkFlowResult.SUCCESS);
+        } else {
+            super.execute();
+            // Naming pattern: <inject_root>\<apk_name_wo_ext>-injected-signed.apk
+            Path localInjectedApk = path(mConfig.getOutdirPath(), "inject").resolve(
+                    mConfig.getApkName() + "-injected-signed" + ".apk");
+            mConfig.setInjectedApkPath(localInjectedApk.toString());
+        }
+    }
+
+    @Override
+    public WorkFlowStatus getStatus() {
+        return WorkFlowStatus.INJECTED_GPINTEROP;
     }
 
     @Override
@@ -182,27 +199,10 @@ public final class ApkInjection extends WorkFlowSingleProcStage {
     }
 
     /**
-     * Do some pre-check
-     */
-    @Override
-    public void execute() {
-        if (mConfig.hasInjectedApkPath()) {
-            // skip execution as we've injected the exact apk before
-            fireOnCompleted(WorkFlowResult.SUCCESS);
-        } else {
-            super.execute();
-            // Naming pattern: <inject_root>\<apk_name_wo_ext>-injected-signed.apk
-            Path localInjectedApk = path(mConfig.getOutdirPath(), "inject").resolve(
-                    mConfig.getApkName() + "-injected-signed" + ".apk");
-            mConfig.setInjectedApkPath(localInjectedApk.toString());
-        }
-    }
-
-    /**
      * lib\\jython.bat <auto_injection_py> --builddrop <build_drop> --output <out_dir> <origin_apk>
      */
     @Override
-    protected ProcessBuilder startWorkerProcess() throws IOException {
+    protected ProcessBuilder startWorkerProcess() {
         // TODO save the log somewhere?
         return new ProcessBuilder().command(join(".", "libs", "jython.bat"),
                 join(mConfig.getInjectionScriptPath(), "AutoInjection.py"), "--builddrop",

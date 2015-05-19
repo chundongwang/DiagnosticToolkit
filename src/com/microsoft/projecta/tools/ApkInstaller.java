@@ -11,10 +11,10 @@ import java.util.logging.Logger;
 import com.microsoft.projecta.tools.common.AdbException;
 import com.microsoft.projecta.tools.common.AdbHelper;
 import com.microsoft.projecta.tools.config.LaunchConfig;
-import com.microsoft.projecta.tools.workflow.WorkFlowSingleProcStage;
+import com.microsoft.projecta.tools.workflow.WorkFlowStage;
 import com.microsoft.projecta.tools.workflow.WorkFlowStatus;
 
-public final class ApkInstaller extends WorkFlowSingleProcStage {
+public final class ApkInstaller extends WorkFlowStage {
     private static Logger logger = Logger.getLogger(ApkInstaller.class.getSimpleName());
     // need the trailing '/' at the end
     private static String ANDROID_LOG_DIR = "/sdcard/diag/log/";
@@ -25,6 +25,31 @@ public final class ApkInstaller extends WorkFlowSingleProcStage {
     public ApkInstaller(LaunchConfig config) {
         super(logger.getName(), "adb process to install apk");
         mConfig = config;
+    }
+
+    /**
+     * dump logcat after install
+     */
+    @Override
+    protected void cleanup() {
+        String apk_name = mConfig.getApkName();
+        try {
+            // prepare folders on both end
+            Path logPath = Files.createDirectories(path(mConfig.getOutdirPath(), "logs"));
+            mAdbHelper.shell("mkdir", "-p", ANDROID_LOG_DIR);
+            // dump logcat to remote folder
+            mAdbHelper.logcat("-d", "-v", "time", "-f",
+                    ANDROID_LOG_DIR + String.format(LOGFILE_TEMPLATE, apk_name));
+            // pull dump file to local folder
+            mAdbHelper.exec("pull", ANDROID_LOG_DIR + String.format(LOGFILE_TEMPLATE, apk_name),
+                    logPath.resolve(String.format(LOGFILE_TEMPLATE, apk_name)).toString());
+        } catch (InterruptedException | IOException e) {
+            fireOnLogOutput(logger, Level.SEVERE, "Error occured while clearing logcat for "
+                    + apk_name, e);
+        } catch (AdbException e) {
+            fireOnLogOutput(logger, Level.SEVERE,
+                    "Error occured while running adb for " + apk_name, e);
+        }
     }
 
     @Override
@@ -53,35 +78,10 @@ public final class ApkInstaller extends WorkFlowSingleProcStage {
     }
 
     /**
-     * dump logcat after install
-     */
-    @Override
-    protected void cleanup() {
-        String apk_name = mConfig.getApkName();
-        try {
-            // prepare folders on both end
-            Path logPath = Files.createDirectories(path(mConfig.getOutdirPath(), "logs"));
-            mAdbHelper.shell("mkdir", "-p", ANDROID_LOG_DIR);
-            // dump logcat to remote folder
-            mAdbHelper.logcat("-d", "-v", "time", "-f",
-                    ANDROID_LOG_DIR + String.format(LOGFILE_TEMPLATE, apk_name));
-            // pull dump file to local folder
-            mAdbHelper.exec("pull", ANDROID_LOG_DIR + String.format(LOGFILE_TEMPLATE, apk_name),
-                    logPath.resolve(String.format(LOGFILE_TEMPLATE, apk_name)).toString());
-        } catch (InterruptedException | IOException e) {
-            fireOnLogOutput(logger, Level.SEVERE, "Error occured while clearing logcat for "
-                    + apk_name, e);
-        } catch (AdbException e) {
-            fireOnLogOutput(logger, Level.SEVERE,
-                    "Error occured while running adb for " + apk_name, e);
-        }
-    }
-
-    /**
      * adb install <apk_file>
      */
     @Override
-    protected ProcessBuilder startWorkerProcess() throws IOException {
+    protected ProcessBuilder startWorkerProcess() {
         String apkPath = mConfig.getOriginApkPath();
         if (mConfig.hasInjectedApkPath()) {
             File injectedApkPath = new File(mConfig.getInjectedApkPath());

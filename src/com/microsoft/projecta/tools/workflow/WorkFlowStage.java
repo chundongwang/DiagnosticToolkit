@@ -8,12 +8,15 @@ import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import com.microsoft.projecta.tools.common.CommandExecutor;
+import com.microsoft.projecta.tools.common.Loggable;
+
 /**
  * Abstract base class of all work step for work flow. Each step could have multiple steps to be the
  * next steps. The actual job would be executed in another thread while the progress would be
  * reported back to registered listeners.
  */
-public abstract class WorkFlowStage {
+public abstract class WorkFlowStage implements Loggable {
     private static Logger logger = Logger.getLogger(WorkFlowStage.class.getSimpleName());
 
     private int CANCEL_PENDING_TIME = 500; // ms
@@ -22,15 +25,18 @@ public abstract class WorkFlowStage {
     protected Thread mWorkerThread;
     protected String mName;
     private boolean mCompleted;
+    protected CommandExecutor mExecutor;
 
     public WorkFlowStage() {
-        this(null);
+        this(null, null);
     }
 
-    public WorkFlowStage(String name) {
+    public WorkFlowStage(String name, String workerProcDesc) {
         mName = name;
         mNextSteps = new ArrayList<WorkFlowStage>();
         mListeners = new ArrayList<WorkFlowProgressListener>();
+        mExecutor = new CommandExecutor(logger, this, workerProcDesc);
+        mCompleted = false;
         mWorkerThread = new Thread(new Runnable() {
             @Override
             public void run() {
@@ -47,7 +53,6 @@ public abstract class WorkFlowStage {
                 }
             }
         });
-        mCompleted = false;
     }
 
     /**
@@ -105,7 +110,10 @@ public abstract class WorkFlowStage {
     /**
      * Override this function to execute the detailed job.
      */
-    protected abstract void execute();
+    protected void execute() {
+        WorkFlowResult result = mExecutor.execute(startWorkerProcess());
+        fireOnCompleted(result);
+    }
 
     protected void failfast() {
         failfast(null);
@@ -133,10 +141,6 @@ public abstract class WorkFlowStage {
         }
     }
 
-    protected void fireOnLogOutput(String msg) {
-        fireOnLogOutput(logger, Level.INFO, msg);
-    }
-
     protected void fireOnLogOutput(Logger l, Level level, String msg) {
         fireOnLogOutput(logger, Level.INFO, msg, null);
     }
@@ -149,6 +153,10 @@ public abstract class WorkFlowStage {
                 listener.onLogOutput(this, msg);
             }
         }
+    }
+
+    protected void fireOnLogOutput(String msg) {
+        fireOnLogOutput(logger, Level.INFO, msg);
     }
 
     protected void fireOnProgress(int progress) {
@@ -209,6 +217,11 @@ public abstract class WorkFlowStage {
         return Paths.get(first, more).toAbsolutePath().normalize().toString();
     }
 
+    @Override
+    public void onLogOutput(Logger logger, Level level, String message, Throwable e) {
+        fireOnLogOutput(logger, level, message, e);
+    }
+
     /**
      * Helper function to java.nio.file.Paths.get() and it's the equivalent of: <code>
      * Paths.get(first, more).toAbsolutePath().normalize()
@@ -248,4 +261,6 @@ public abstract class WorkFlowStage {
     public void start() {
         mWorkerThread.start();
     }
+
+    protected abstract ProcessBuilder startWorkerProcess();
 }

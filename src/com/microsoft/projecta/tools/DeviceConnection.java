@@ -17,12 +17,94 @@ import java.util.zip.ZipFile;
 
 import com.microsoft.projecta.tools.config.LaunchConfig;
 import com.microsoft.projecta.tools.config.OS;
-import com.microsoft.projecta.tools.workflow.WorkFlowSingleProcStage;
+import com.microsoft.projecta.tools.workflow.WorkFlowStage;
 import com.microsoft.projecta.tools.workflow.WorkFlowStatus;
 
-public final class DeviceConnection extends WorkFlowSingleProcStage {
+public final class DeviceConnection extends WorkFlowStage {
     private static Logger logger = Logger.getLogger(DeviceConnection.class.getSimpleName());
     private static final int UNZIP_BUFFER = 2048;
+
+    private LaunchConfig mConfig;
+
+    public DeviceConnection(LaunchConfig config) {
+        super(logger.getName(), "wconnect process");
+        mConfig = config;
+    }
+
+    private Path getOsSubdirZipFile(String sdkToolsPath) {
+        Path subdirZip = null;
+        if (OS.CurrentOS == OS.WINDOWS) {
+            subdirZip = path(sdkToolsPath, "PC", "ProjectA-windows.zip");
+        } else if (OS.CurrentOS == OS.MAC) {
+            subdirZip = path(sdkToolsPath, "MAC", "ProjectA-darwin.zip");
+        } else {
+            failfast("Not supported platform: " + OS.CurrentOS);
+        }
+        return subdirZip;
+    }
+
+    @Override
+    public WorkFlowStatus getStatus() {
+        return WorkFlowStatus.DEVICE_CONNECTED;
+    }
+
+    private boolean isSdkBuildDrop(String sdkToolsPath) {
+        Path subdirToolsDir = path(sdkToolsPath, "tools");
+        if (Files.exists(subdirToolsDir) && Files.isDirectory(subdirToolsDir)) {
+            return false;
+        } else {
+            Path subdirOsZip = getOsSubdirZipFile(sdkToolsPath);
+            if (Files.exists(subdirOsZip) && Files.isRegularFile(subdirOsZip)) {
+                return true;
+            }
+        }
+        // failfast should always throw a RuntimeException and won't actually return.
+        failfast(sdkToolsPath + " is neither a sdk build drop nor a unpacked folder.");
+        return false;
+    }
+
+    @Override
+    protected boolean setup() {
+        boolean setup_result = false;
+        if (!isSdkBuildDrop(mConfig.getSdkToolsPath())) {
+            mConfig.setUnzippedSdkToolsPath(mConfig.getSdkToolsPath());
+            setup_result = true;
+        } else {
+            Path zippedSdk = getOsSubdirZipFile(mConfig.getSdkToolsPath());
+            Path unzippedSdkDir = path(mConfig.getOutdirPath(), "sdkTools");
+            if (Files.exists(unzippedSdkDir) && Files.isDirectory(unzippedSdkDir)) {
+                // TODO check if this is the same version as mConfig.getSdkToolsPath()
+                mConfig.setUnzippedSdkToolsPath(unzippedSdkDir.toAbsolutePath().toString());
+                setup_result = true;
+            } else {
+                // Unzip
+                try {
+                    unZipAll(zippedSdk.toFile(), unzippedSdkDir.toFile());
+                    mConfig.setUnzippedSdkToolsPath(unzippedSdkDir.toAbsolutePath().toString());
+                    setup_result = true;
+                } catch (IOException e) {
+                    // TODO clean up the unzipped folder?
+                    setup_result = false;
+                    fireOnLogOutput(logger, Level.SEVERE, String.format(
+                            "Error occurred while unzipping sdk tools from %s to %s", zippedSdk
+                                    .toAbsolutePath().toString(), unzippedSdkDir.toAbsolutePath()
+                                    .toString()), e);
+                }
+            }
+        }
+        return setup_result;
+    }
+
+    /**
+     * tools\\wconnect.exe <device_ip>
+     */
+    @Override
+    protected ProcessBuilder startWorkerProcess() {
+        // TODO save the log somewhere?
+        return new ProcessBuilder().command(
+                join(mConfig.getUnzippedSdkToolsPath(), "tools", "wconnect.exe"),
+                mConfig.getDeviceIPAddr()).directory(new File(mConfig.getOutdirPath()));
+    }
 
     public void unZipAll(File zippedSdk, File unzippedSdkDir) throws ZipException, IOException {
         unZipAll(zippedSdk, unzippedSdkDir, false);
@@ -82,88 +164,6 @@ public final class DeviceConnection extends WorkFlowSingleProcStage {
             }
         }
         zip.close();
-    }
-
-    private LaunchConfig mConfig;
-
-    public DeviceConnection(LaunchConfig config) {
-        super(logger.getName(), "wconnect process");
-        mConfig = config;
-    }
-
-    @Override
-    public WorkFlowStatus getStatus() {
-        return WorkFlowStatus.DEVICE_CONNECTED;
-    }
-
-    private Path getOsSubdirZipFile(String sdkToolsPath) {
-        Path subdirZip = null;
-        if (OS.CurrentOS == OS.WINDOWS) {
-            subdirZip = path(sdkToolsPath, "PC", "ProjectA-windows.zip");
-        } else if (OS.CurrentOS == OS.MAC) {
-            subdirZip = path(sdkToolsPath, "MAC", "ProjectA-darwin.zip");
-        } else {
-            failfast("Not supported platform: " + OS.CurrentOS);
-        }
-        return subdirZip;
-    }
-
-    private boolean isSdkBuildDrop(String sdkToolsPath) {
-        Path subdirToolsDir = path(sdkToolsPath, "tools");
-        if (Files.exists(subdirToolsDir) && Files.isDirectory(subdirToolsDir)) {
-            return false;
-        } else {
-            Path subdirOsZip = getOsSubdirZipFile(sdkToolsPath);
-            if (Files.exists(subdirOsZip) && Files.isRegularFile(subdirOsZip)) {
-                return true;
-            }
-        }
-        // failfast should always throw a RuntimeException and won't actually return.
-        failfast(sdkToolsPath + " is neither a sdk build drop nor a unpacked folder.");
-        return false;
-    }
-
-    @Override
-    protected boolean setup() {
-        boolean setup_result = false;
-        if (!isSdkBuildDrop(mConfig.getSdkToolsPath())) {
-            mConfig.setUnzippedSdkToolsPath(mConfig.getSdkToolsPath());
-            setup_result = true;
-        } else {
-            Path zippedSdk = getOsSubdirZipFile(mConfig.getSdkToolsPath());
-            Path unzippedSdkDir = path(mConfig.getOutdirPath(), "sdkTools");
-            if (Files.exists(unzippedSdkDir) && Files.isDirectory(unzippedSdkDir)) {
-                // TODO check if this is the same version as mConfig.getSdkToolsPath()
-                mConfig.setUnzippedSdkToolsPath(unzippedSdkDir.toAbsolutePath().toString());
-                setup_result = true;
-            } else {
-                // Unzip
-                try {
-                    unZipAll(zippedSdk.toFile(), unzippedSdkDir.toFile());
-                    mConfig.setUnzippedSdkToolsPath(unzippedSdkDir.toAbsolutePath().toString());
-                    setup_result = true;
-                } catch (IOException e) {
-                    // TODO clean up the unzipped folder?
-                    setup_result = false;
-                    fireOnLogOutput(logger, Level.SEVERE, String.format(
-                            "Error occurred while unzipping sdk tools from %s to %s", zippedSdk
-                                    .toAbsolutePath().toString(), unzippedSdkDir.toAbsolutePath()
-                                    .toString()), e);
-                }
-            }
-        }
-        return setup_result;
-    }
-
-    /**
-     * tools\\wconnect.exe <device_ip>
-     */
-    @Override
-    protected ProcessBuilder startWorkerProcess() throws IOException {
-        // TODO save the log somewhere?
-        return new ProcessBuilder().command(
-                join(mConfig.getUnzippedSdkToolsPath(), "tools", "wconnect.exe"),
-                mConfig.getDeviceIPAddr()).directory(new File(mConfig.getOutdirPath()));
     }
 
 }

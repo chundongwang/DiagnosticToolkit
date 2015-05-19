@@ -23,14 +23,6 @@ import com.microsoft.projecta.tools.workflow.WorkFlowStage;
 import com.microsoft.projecta.tools.workflow.WorkFlowStatus;
 
 public class LauncherConsole implements WorkFlowProgressListener {
-    public static void main(String[] args) {
-        new LauncherConsole().kickoff(args[args.length - 1]);
-    }
-
-    private LaunchConfig mConfig;
-    private boolean mCompleted;
-    private Thread mThread;
-
     @SuppressWarnings("rawtypes")
     private static WorkFlowStage buildStages(LaunchConfig config, Class<?>... steps) {
         WorkFlowStage stageStart = null;
@@ -58,6 +50,14 @@ public class LauncherConsole implements WorkFlowProgressListener {
 
         return stageStart;
     }
+
+    public static void main(String[] args) {
+        new LauncherConsole().kickoff(args[args.length - 1]);
+    }
+    private LaunchConfig mConfig;
+    private boolean mCompleted;
+
+    private Thread mThread;
 
     public LauncherConsole() {
         mConfig = new LaunchConfig.Builder(Branch.Develop).build();

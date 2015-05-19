@@ -11,10 +11,10 @@ import java.util.logging.Logger;
 import com.microsoft.projecta.tools.common.AdbException;
 import com.microsoft.projecta.tools.common.AdbHelper;
 import com.microsoft.projecta.tools.config.LaunchConfig;
-import com.microsoft.projecta.tools.workflow.WorkFlowSingleProcStage;
+import com.microsoft.projecta.tools.workflow.WorkFlowStage;
 import com.microsoft.projecta.tools.workflow.WorkFlowStatus;
 
-public class ApkMainLauncher extends WorkFlowSingleProcStage {
+public class ApkMainLauncher extends WorkFlowStage {
     private static Logger logger = Logger.getLogger(ApkMainLauncher.class.getSimpleName());
     // need the trailing '/' at the end
     private static String ANDROID_LOG_DIR = "/sdcard/diag/log/";
@@ -25,35 +25,6 @@ public class ApkMainLauncher extends WorkFlowSingleProcStage {
     public ApkMainLauncher(LaunchConfig config) {
         super(logger.getName(), "adb process to launch the activity");
         mConfig = config;
-    }
-
-    @Override
-    public WorkFlowStatus getStatus() {
-        return WorkFlowStatus.LAUNCH_SUCCESS;
-    }
-
-    /**
-     * Clear logcat before launch
-     */
-    @Override
-    protected boolean setup() {
-        boolean result = false;
-        try {
-            // even if logcat -c failed, we should still probably keep going
-            mAdbHelper = AdbHelper.getInstance(mConfig.getUnzippedSdkToolsPath(),
-                    mConfig.getOutdirPath());
-            result = true;
-
-            // clear logcat before launch
-            mAdbHelper.logcat("-c");
-        } catch (InterruptedException | IOException e) {
-            fireOnLogOutput(logger, Level.SEVERE,
-                    "Error occured while parsing AndroidManifest.xml and/or clearing logcat", e);
-        } catch (AdbException e) {
-            fireOnLogOutput(logger, Level.SEVERE,
-                    "Error occured while running adb to clear logcat ", e);
-        }
-        return result;
     }
 
     /**
@@ -91,8 +62,37 @@ public class ApkMainLauncher extends WorkFlowSingleProcStage {
             Thread.sleep(3000);
         } catch (InterruptedException e) {
             // Cancelled by user
-            fireOnLogOutput("Interupted while waiting after executed " + getWorkerProcDesc());
+            fireOnLogOutput("Interupted while waiting after executed " + mExecutor.getWorkerProcDesc());
         }
+    }
+
+    @Override
+    public WorkFlowStatus getStatus() {
+        return WorkFlowStatus.LAUNCH_SUCCESS;
+    }
+
+    /**
+     * Clear logcat before launch
+     */
+    @Override
+    protected boolean setup() {
+        boolean result = false;
+        try {
+            // even if logcat -c failed, we should still probably keep going
+            mAdbHelper = AdbHelper.getInstance(mConfig.getUnzippedSdkToolsPath(),
+                    mConfig.getOutdirPath());
+            result = true;
+
+            // clear logcat before launch
+            mAdbHelper.logcat("-c");
+        } catch (InterruptedException | IOException e) {
+            fireOnLogOutput(logger, Level.SEVERE,
+                    "Error occured while parsing AndroidManifest.xml and/or clearing logcat", e);
+        } catch (AdbException e) {
+            fireOnLogOutput(logger, Level.SEVERE,
+                    "Error occured while running adb to clear logcat ", e);
+        }
+        return result;
     }
 
     /**
@@ -101,7 +101,7 @@ public class ApkMainLauncher extends WorkFlowSingleProcStage {
      * com.kokteyl.goal/com.kokteyl.content.Splash
      */
     @Override
-    protected ProcessBuilder startWorkerProcess() throws IOException {
+    protected ProcessBuilder startWorkerProcess() {
         return new ProcessBuilder().command(
                 join(mConfig.getUnzippedSdkToolsPath(), "SDK_19.1.0", "platform-tools", "adb.exe"),
                 "shell", "am", "start", "-a", "android.intent.action.MAIN", "-c",
