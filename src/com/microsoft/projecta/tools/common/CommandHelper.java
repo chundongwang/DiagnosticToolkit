@@ -17,7 +17,7 @@ public class CommandHelper {
     protected String mCommandName;
     protected Path mExecutablePath;
     protected Path mWorkingDir;
-    private boolean mSuppressNonZeroException;
+    protected boolean mSuppressNonZeroException;
     
     public ProcessBuilder build(List<String> args) {
         args.add(0, mExecutablePath.toString());
