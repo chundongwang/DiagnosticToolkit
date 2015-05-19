@@ -11,7 +11,7 @@ import java.nio.file.Paths;
 import java.util.List;
 import java.util.logging.Logger;
 
-import com.microsoft.projecta.tools.AndroidManifestInfo;
+import com.microsoft.projecta.tools.common.AndroidManifestInfo;
 
 public final class LaunchConfig {
 

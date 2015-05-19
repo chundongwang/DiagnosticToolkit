@@ -9,12 +9,12 @@ import java.util.List;
 
 import org.xmlpull.v1.XmlPullParserException;
 
-import com.microsoft.projecta.tools.AndroidManifestInfo;
 import com.microsoft.projecta.tools.ApkInjection;
 import com.microsoft.projecta.tools.ApkInstaller;
 import com.microsoft.projecta.tools.ApkKiller;
 import com.microsoft.projecta.tools.ApkMainLauncher;
 import com.microsoft.projecta.tools.DeviceConnection;
+import com.microsoft.projecta.tools.common.AndroidManifestInfo;
 import com.microsoft.projecta.tools.config.Branch;
 import com.microsoft.projecta.tools.config.LaunchConfig;
 import com.microsoft.projecta.tools.workflow.WorkFlowProgressListener;

@@ -1,5 +1,5 @@
 
-package com.microsoft.projecta.tools;
+package com.microsoft.projecta.tools.common;
 
 @SuppressWarnings("serial")
 public class AdbException extends Exception {

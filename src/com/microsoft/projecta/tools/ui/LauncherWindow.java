@@ -33,7 +33,7 @@ import org.eclipse.swt.widgets.Text;
 import org.eclipse.wb.swt.SWTResourceManager;
 import org.xmlpull.v1.XmlPullParserException;
 
-import com.microsoft.projecta.tools.AndroidManifestInfo;
+import com.microsoft.projecta.tools.common.AndroidManifestInfo;
 import com.microsoft.projecta.tools.config.Branch;
 import com.microsoft.projecta.tools.config.LaunchConfig;
 
