@@ -8,13 +8,16 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.Enumeration;
+import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipException;
 import java.util.zip.ZipFile;
 
+import com.microsoft.projecta.tools.common.WconnectHelper;
 import com.microsoft.projecta.tools.config.LaunchConfig;
 import com.microsoft.projecta.tools.config.OS;
 import com.microsoft.projecta.tools.workflow.WorkFlowStage;
@@ -25,6 +28,7 @@ public final class DeviceConnection extends WorkFlowStage {
     private static final int UNZIP_BUFFER = 2048;
 
     private LaunchConfig mConfig;
+    private WconnectHelper mWcHelper;
 
     public DeviceConnection(LaunchConfig config) {
         super(logger.getName(), "wconnect process");
@@ -81,7 +85,11 @@ public final class DeviceConnection extends WorkFlowStage {
                 try {
                     unZipAll(zippedSdk.toFile(), unzippedSdkDir.toFile());
                     mConfig.setUnzippedSdkToolsPath(unzippedSdkDir.toAbsolutePath().toString());
-                    setup_result = true;
+
+                    mWcHelper = WconnectHelper.getInstance(mConfig.getUnzippedSdkToolsPath(),
+                            mConfig.getOutdirPath());
+
+                    setup_result = mWcHelper != null;
                 } catch (IOException e) {
                     // TODO clean up the unzipped folder?
                     setup_result = false;
@@ -101,9 +109,9 @@ public final class DeviceConnection extends WorkFlowStage {
     @Override
     protected ProcessBuilder startWorkerProcess() {
         // TODO save the log somewhere?
-        return new ProcessBuilder().command(
-                join(mConfig.getUnzippedSdkToolsPath(), "tools", "wconnect.exe"),
-                mConfig.getDeviceIPAddr()).directory(new File(mConfig.getOutdirPath()));
+        List<String> commands = new ArrayList<String>();
+        commands.add(mConfig.getDeviceIPAddr());
+        return mWcHelper.build(commands);
     }
 
     public void unZipAll(File zippedSdk, File unzippedSdkDir) throws ZipException, IOException {

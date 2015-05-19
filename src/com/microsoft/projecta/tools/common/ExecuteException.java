@@ -2,8 +2,8 @@
 package com.microsoft.projecta.tools.common;
 
 @SuppressWarnings("serial")
-public class AdbException extends Exception {
-    public AdbException(String msg) {
+public class ExecuteException extends Exception {
+    public ExecuteException(String msg) {
         super(msg);
     }
 }

@@ -8,8 +8,8 @@ import java.nio.file.Path;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-import com.microsoft.projecta.tools.common.AdbException;
 import com.microsoft.projecta.tools.common.AdbHelper;
+import com.microsoft.projecta.tools.common.ExecuteException;
 import com.microsoft.projecta.tools.config.LaunchConfig;
 import com.microsoft.projecta.tools.workflow.WorkFlowStage;
 import com.microsoft.projecta.tools.workflow.WorkFlowStatus;
@@ -46,7 +46,7 @@ public class ApkMainLauncher extends WorkFlowStage {
         } catch (InterruptedException | IOException e) {
             fireOnLogOutput(logger, Level.SEVERE, "Error occured while clearing logcat for "
                     + apk_name, e);
-        } catch (AdbException e) {
+        } catch (ExecuteException e) {
             fireOnLogOutput(logger, Level.SEVERE,
                     "Error occured while running adb for " + apk_name, e);
         }
@@ -88,7 +88,7 @@ public class ApkMainLauncher extends WorkFlowStage {
         } catch (InterruptedException | IOException e) {
             fireOnLogOutput(logger, Level.SEVERE,
                     "Error occured while parsing AndroidManifest.xml and/or clearing logcat", e);
-        } catch (AdbException e) {
+        } catch (ExecuteException e) {
             fireOnLogOutput(logger, Level.SEVERE,
                     "Error occured while running adb to clear logcat ", e);
         }

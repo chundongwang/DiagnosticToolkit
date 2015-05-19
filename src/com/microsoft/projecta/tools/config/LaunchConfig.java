@@ -6,12 +6,12 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
-import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
 import java.util.logging.Logger;
 
 import com.microsoft.projecta.tools.common.AndroidManifestInfo;
+import com.microsoft.projecta.tools.common.Utils;
 
 public final class LaunchConfig {
 
@@ -129,21 +129,6 @@ public final class LaunchConfig {
             return this;
         }
     }
-
-    /**
-     * Getting file name without extension.
-     * 
-     * @param path Path to the file
-     * @return
-     */
-    private static String getNameWithoutExtension(Path path) {
-        String fileName = path.getFileName().toString();
-        int pos = fileName.lastIndexOf(".");
-        if (pos > 0) {
-            fileName = fileName.substring(0, pos);
-        }
-        return fileName;
-    }
     private String mBuildDropPath;
     private String mTakehomeScriptPath;
     private String mSdkToolsPath;
@@ -195,7 +180,7 @@ public final class LaunchConfig {
     }
 
     public String getApkName() {
-        return getNameWithoutExtension(Paths.get(mOriginApkPath));
+        return Utils.getNameWithoutExtension(Paths.get(mOriginApkPath));
     }
 
     /**

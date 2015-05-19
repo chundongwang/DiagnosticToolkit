@@ -25,6 +25,7 @@ import org.eclipse.swt.widgets.DirectoryDialog;
 import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.FileDialog;
 import org.eclipse.swt.widgets.Group;
+import org.eclipse.swt.widgets.Label;
 import org.eclipse.swt.widgets.MessageBox;
 import org.eclipse.swt.widgets.Shell;
 import org.eclipse.swt.widgets.TabFolder;
@@ -36,8 +37,6 @@ import org.xmlpull.v1.XmlPullParserException;
 import com.microsoft.projecta.tools.common.AndroidManifestInfo;
 import com.microsoft.projecta.tools.config.Branch;
 import com.microsoft.projecta.tools.config.LaunchConfig;
-
-import org.eclipse.swt.widgets.Label;
 
 public class LauncherWindow {
 
