@@ -49,6 +49,9 @@ public class LauncherWindow {
      */
     public static void main(String[] args) {
         try {
+            if (args.length > 0) {
+                System.setProperty("user.dir", args[0]);
+            }
             LauncherWindow window = new LauncherWindow();
             window.open();
         } catch (Exception e) {
@@ -521,7 +524,9 @@ public class LauncherWindow {
         mTextSdkToolsPath.setText(mConfig.getSdkToolsPath());
         mTextInjectionScriptPath.setText(mConfig.getInjectionScriptPath());
         if (mConfig.hasDeviceIPAddr()) {
-            mComboDevice.setText(mConfig.getDeviceIPAddr());
+            if (!mComboDevice.getText().equals(mConfig.getDeviceIPAddr())) {
+                mComboDevice.setText(mConfig.getDeviceIPAddr());
+            }
         }
         if (mConfig.hasOriginApkPath()) {
             mTextOriginApkPath.setText(mConfig.getOriginApkPath());
@@ -537,14 +542,17 @@ public class LauncherWindow {
             mLblPackagename.setText(mConfig.getApkPackageName());
             List<String> activities = mConfig.getApkActivities();
             String startupActivity = mConfig.getActivityToLaunch();
-            int index = -1;
-            for (String act : activities) {
-                mComboActivities.add(act);
-                if (act.equals(startupActivity)) {
-                    index = mComboActivities.getItemCount() - 1;
+            if (mComboActivities.getItemCount() != activities.size()) {
+                mComboActivities.removeAll();
+                int index = -1;
+                for (String act : activities) {
+                    mComboActivities.add(act);
+                    if (act.equals(startupActivity)) {
+                        index = mComboActivities.getItemCount() - 1;
+                    }
                 }
+                mComboActivities.select(index);
             }
-            mComboActivities.select(index);
         }
 
         if (mConfig.validate()) {

@@ -61,10 +61,6 @@ public class CommandHelper {
         return launch(build(cmds), mCommandName + " " + arg1);
     }
 
-    public String exec(String... args) throws InterruptedException, IOException, ExecuteException {
-        return launch(build(args), mCommandName);
-    }
-
     public String exec(String arg) throws InterruptedException, IOException, ExecuteException {
         return launch(build(arg), mCommandName);
     }
