@@ -26,7 +26,7 @@ public class CommandHelper {
         return pb;
     }
 
-    private String launch(String[] cmds, String commandDesc) throws InterruptedException, IOException,
+    protected static String launch(ProcessBuilder pb, String commandDesc) throws InterruptedException, IOException,
             ExecuteException {
         final StringBuilder output = new StringBuilder();
         CommandExecutor executor = new CommandExecutor(new Loggable() {
@@ -41,7 +41,7 @@ public class CommandHelper {
             }
         });
         
-        WorkFlowResult result = executor.execute(build(cmds));
+        WorkFlowResult result = executor.execute(pb);
         if (result != WorkFlowResult.SUCCESS) {
             throw new ExecuteException(commandDesc);
         }
@@ -56,7 +56,7 @@ public class CommandHelper {
         cmds[1] = arg1;
         System.arraycopy(args, 0, cmds, 2, args.length);
 
-        return launch(cmds, mCommandName + " " + arg1);
+        return launch(build(cmds), mCommandName + " " + arg1);
     }
 
     public String exec(String... args) throws InterruptedException, IOException, ExecuteException {
@@ -64,7 +64,7 @@ public class CommandHelper {
         cmds[0] = mExecutablePath.toString();
         System.arraycopy(args, 0, cmds, 1, args.length);
 
-        return launch(cmds, mCommandName);
+        return launch(build(cmds), mCommandName);
     }
 
     public String exec(String arg) throws InterruptedException, IOException, ExecuteException {
@@ -72,7 +72,7 @@ public class CommandHelper {
         cmds[0] = mExecutablePath.toString();
         cmds[1] = arg;
 
-        return launch(cmds, mCommandName);
+        return launch(build(cmds), mCommandName);
     }
 
     public String getWorkingDir() {
