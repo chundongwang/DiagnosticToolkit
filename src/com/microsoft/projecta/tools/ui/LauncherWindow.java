@@ -35,6 +35,8 @@ import org.eclipse.wb.swt.SWTResourceManager;
 import org.xmlpull.v1.XmlPullParserException;
 
 import com.microsoft.projecta.tools.common.AndroidManifestInfo;
+import com.microsoft.projecta.tools.common.ExecuteException;
+import com.microsoft.projecta.tools.common.TshellHelper;
 import com.microsoft.projecta.tools.config.Branch;
 import com.microsoft.projecta.tools.config.LaunchConfig;
 
@@ -99,11 +101,30 @@ public class LauncherWindow {
             new Thread(new Runnable() {
                 @Override
                 public void run() {
-                    final LaunchConfig config = new LaunchConfig.Builder(branch).build();
+                    // build launch config from default of the specified branch
+                    final LaunchConfig config = new LaunchConfig.Builder(branch).addOutDir(System.getProperty("user.dir"))
+                            .build();
                     display.asyncExec(new Runnable() {
                         @Override
                         public void run() {
                             syncConfigToUI(config);
+                        }
+                    });
+                    
+                    // get device ip
+                    final StringBuilder deviceIpAddr = new StringBuilder("( Need the non-loopback IP address )");
+                    try {
+                        TshellHelper tshell = TshellHelper.getInstance(System.getProperty("user.dir"));
+                        deviceIpAddr.delete(0, deviceIpAddr.length());
+                        deviceIpAddr.append(tshell.getIpAddr());
+                    } catch (IOException | InterruptedException | ExecuteException e) {
+                        // swallow
+                    }
+                    display.asyncExec(new Runnable() {
+                        @Override
+                        public void run() {
+                            mConfig.setDeviceIPAddr(deviceIpAddr.toString());
+                            syncConfigToUI();
                         }
                     });
                 }
@@ -217,6 +238,7 @@ public class LauncherWindow {
         comboBranch.select(0);
 
         mTextBuildDrop = new Text(composite_basic_inner, SWT.BORDER);
+        mTextBuildDrop.setText("( loading... )");
         mTextBuildDrop.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, false, 1, 1));
 
         Button btnBuildFinder = new Button(composite_basic_inner, SWT.NONE);
@@ -260,9 +282,7 @@ public class LauncherWindow {
                 syncConfigToUI();
             }
         });
-        mComboDevice.setItems(new String[] {
-            "127.0.0.1"
-        });
+        mComboDevice.setItems(new String[] {"( loading... )"});
         mComboDevice.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, false, 2, 1));
         mComboDevice.select(0);
 
@@ -305,6 +325,7 @@ public class LauncherWindow {
         composite_advance_inner.setLayout(new GridLayout(2, false));
 
         mTextTakehomePath = new Text(composite_advance_inner, SWT.BORDER);
+        mTextTakehomePath.setText("( loading... )");
         mTextTakehomePath.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, false, 1, 1));
 
         Button btnTakehomeScript = new Button(composite_advance_inner, SWT.NONE);
@@ -324,6 +345,7 @@ public class LauncherWindow {
         btnTakehomeScript.setText("TakeHome Script");
 
         mTextSdkToolsPath = new Text(composite_advance_inner, SWT.BORDER);
+        mTextSdkToolsPath.setText("( loading... )");
         mTextSdkToolsPath.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, false, 1, 1));
 
         Button btnSdkTools = new Button(composite_advance_inner, SWT.NONE);
@@ -342,6 +364,7 @@ public class LauncherWindow {
         btnSdkTools.setText("SDK Tools");
 
         mTextInjectionScriptPath = new Text(composite_advance_inner, SWT.BORDER);
+        mTextInjectionScriptPath.setText("( loading... )");
         mTextInjectionScriptPath
                 .setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, false, 1, 1));
 
@@ -393,7 +416,7 @@ public class LauncherWindow {
             }
         });
         mBtnTakeScreenshot.setText("Take screenshot");
-        
+
         mBtnKillApp = new Button(composite, SWT.CHECK);
         mBtnKillApp.addSelectionListener(new SelectionAdapter() {
             @Override
@@ -489,7 +512,9 @@ public class LauncherWindow {
         mTextTakehomePath.setText(mConfig.getTakehomeScriptPath());
         mTextSdkToolsPath.setText(mConfig.getSdkToolsPath());
         mTextInjectionScriptPath.setText(mConfig.getInjectionScriptPath());
-        mComboDevice.setText(mConfig.getDeviceIPAddr());
+        if (mConfig.hasDeviceIPAddr()) {
+            mComboDevice.setText(mConfig.getDeviceIPAddr());
+        }
         if (mConfig.hasOriginApkPath()) {
             mTextOriginApkPath.setText(mConfig.getOriginApkPath());
         }
@@ -508,13 +533,13 @@ public class LauncherWindow {
             for (String act : activities) {
                 mComboActivities.add(act);
                 if (act.equals(startupActivity)) {
-                    index = mComboActivities.getItemCount()-1;
+                    index = mComboActivities.getItemCount() - 1;
                 }
             }
             mComboActivities.select(index);
         }
 
-        if (mConfig.hasOriginApkPath() && mConfig.hasOutdirPath()) {
+        if (mConfig.validate()) {
             mBtnGo.setEnabled(true);
         }
     }

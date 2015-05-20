@@ -3,6 +3,10 @@ package com.microsoft.projecta.tools.common;
 
 import java.io.IOException;
 import java.nio.file.Path;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+
+import com.microsoft.projecta.tools.workflow.WorkFlowResult;
 
 public class CommandHelper {
 
@@ -22,40 +26,53 @@ public class CommandHelper {
         return pb;
     }
 
-    public void exec(String arg1, String... args) throws InterruptedException, IOException,
+    private String launch(String[] cmds, String commandDesc) throws InterruptedException, IOException,
+            ExecuteException {
+        final StringBuilder output = new StringBuilder();
+        CommandExecutor executor = new CommandExecutor(new Loggable() {
+            @Override
+            public void onLogOutput(Logger logger, Level level, String message, Throwable e) {
+                output.append(message);
+                output.append('\n');
+                if (e!=null) {
+                    output.append(e.toString());
+                    output.append('\n');
+                }
+            }
+        });
+        
+        WorkFlowResult result = executor.execute(build(cmds));
+        if (result != WorkFlowResult.SUCCESS) {
+            throw new ExecuteException(commandDesc);
+        }
+        
+        return output.toString();
+    }
+
+    public String exec(String arg1, String... args) throws InterruptedException, IOException,
             ExecuteException {
         String[] cmds = new String[args.length + 2];
         cmds[0] = mExecutablePath.toString();
         cmds[1] = arg1;
         System.arraycopy(args, 0, cmds, 2, args.length);
 
-        int exitCode = build(cmds).start().waitFor();
-        if (exitCode != 0 && !isSuppressNonZeroException()) {
-            throw new ExecuteException(mCommandName + " " + arg1 + " failed with exit code: "
-                    + exitCode);
-        }
+        return launch(cmds, mCommandName + " " + arg1);
     }
 
-    public void exec(String... args) throws InterruptedException, IOException, ExecuteException {
+    public String exec(String... args) throws InterruptedException, IOException, ExecuteException {
         String[] cmds = new String[args.length + 1];
         cmds[0] = mExecutablePath.toString();
         System.arraycopy(args, 0, cmds, 1, args.length);
 
-        int exitCode = build(cmds).start().waitFor();
-        if (exitCode != 0 && !isSuppressNonZeroException()) {
-            throw new ExecuteException(mCommandName + " failed with exit code: " + exitCode);
-        }
+        return launch(cmds, mCommandName);
     }
 
-    public void exec(String arg) throws InterruptedException, IOException, ExecuteException {
+    public String exec(String arg) throws InterruptedException, IOException, ExecuteException {
         String[] cmds = new String[2];
         cmds[0] = mExecutablePath.toString();
         cmds[1] = arg;
 
-        int exitCode = build(cmds).start().waitFor();
-        if (exitCode != 0 && !isSuppressNonZeroException()) {
-            throw new ExecuteException(mCommandName + " failed with exit code: " + exitCode);
-        }
+        return launch(cmds, mCommandName);
     }
 
     public String getWorkingDir() {
@@ -79,5 +96,4 @@ public class CommandHelper {
     public void setSuppressNonZeroException(boolean suppressNonZeroException) {
         mSuppressNonZeroException = suppressNonZeroException;
     }
-
 }

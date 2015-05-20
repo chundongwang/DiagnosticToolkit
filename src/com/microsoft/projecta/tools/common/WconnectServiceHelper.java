@@ -86,13 +86,12 @@ public class WconnectServiceHelper implements Loggable {
         try {
             File logfile = mLogDirPath.resolve("wconnectsvc.log").toFile();
             logfile.createNewFile();
-            BufferedWriter writer = new BufferedWriter(new FileWriter(logfile));
+            BufferedWriter writer = new BufferedWriter(new FileWriter(logfile, true));
             writer.write(message);
             // TODO what about e?
             writer.close();
         } catch (IOException e1) {
-            // TODO Auto-generated catch block
-            e1.printStackTrace();
+            throw new RuntimeException("Error while writing wconnectsvc.log", e1);
         }
 
     }

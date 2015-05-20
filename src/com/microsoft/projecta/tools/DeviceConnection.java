@@ -84,10 +84,7 @@ public final class DeviceConnection extends WorkFlowStage {
                     unZipAll(zippedSdk.toFile(), unzippedSdkDir.toFile());
                     mConfig.setUnzippedSdkToolsPath(unzippedSdkDir.toAbsolutePath().toString());
 
-                    mWcHelper = WconnectHelper.getInstance(mConfig.getUnzippedSdkToolsPath(),
-                            mConfig.getOutdirPath());
-
-                    setup_result = mWcHelper != null;
+                    setup_result = true;
                 } catch (IOException e) {
                     // TODO clean up the unzipped folder?
                     setup_result = false;
@@ -96,6 +93,18 @@ public final class DeviceConnection extends WorkFlowStage {
                                     .toAbsolutePath().toString(), unzippedSdkDir.toAbsolutePath()
                                     .toString()), e);
                 }
+            }
+        }
+        if (setup_result) {
+            try {
+                mWcHelper = WconnectHelper.getInstance(mConfig.getUnzippedSdkToolsPath(),
+                        mConfig.getOutdirPath());
+                setup_result = mWcHelper != null;
+            } catch (IOException e) {
+                setup_result = false;
+                fireOnLogOutput(logger, Level.SEVERE, String.format(
+                        "Error occurred while locating wconnect.ext under %s",
+                        mConfig.getUnzippedSdkToolsPath()), e);
             }
         }
         return setup_result;

@@ -1,12 +1,15 @@
 
 package com.microsoft.projecta.tools;
 
+import java.io.IOException;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Logger;
 
+import com.microsoft.projecta.tools.common.ExecuteException;
+import com.microsoft.projecta.tools.common.TshellHelper;
 import com.microsoft.projecta.tools.config.LaunchConfig;
 import com.microsoft.projecta.tools.workflow.WorkFlowProgressListener;
 import com.microsoft.projecta.tools.workflow.WorkFlowResult;
@@ -178,6 +181,7 @@ public final class FullLaunchManager implements WorkFlowProgressListener {
      * Build the chain of actions and kick off.
      */
     public void launch() {
+        setCancelled(false);
         setStopped(false);
         new Thread(new Runnable() {
             @Override
@@ -188,7 +192,7 @@ public final class FullLaunchManager implements WorkFlowProgressListener {
     }
 
     @Override
-    public void onCompleted(WorkFlowStage sender, WorkFlowStatus status, WorkFlowResult result) {
+    public void onCompleted(final WorkFlowStage sender, WorkFlowStatus status, WorkFlowResult result) {
         mListener.onCompleted(sender, status, result);
         sender.removeListener(this);
 
@@ -197,9 +201,33 @@ public final class FullLaunchManager implements WorkFlowProgressListener {
             for (WorkFlowStage nextStage : nextStages) {
                 executeStage(nextStage);
             }
+            if (nextStages.isEmpty()) {
+                // the end of everything
+                setStopped(true);
+            }
         } else {
+            // failed or cancelled
             setStopped(true);
         }
+
+        if (isStopped()) {
+            new Thread(new Runnable() {
+                @Override
+                public void run() {
+                    // grab log
+                    try {
+                        TshellHelper tshell = TshellHelper.getInstance(mConfig.getLogsDir());
+                        tshell.grabLogs();
+                    } catch (IOException | InterruptedException | ExecuteException e) {
+                        mListener.onLogOutput(
+                                sender,
+                                "Error occured while grabing ETL from connected device: "
+                                        + e.getMessage());
+                    }
+                }
+            }).start();
+        }
+
     }
 
     @Override

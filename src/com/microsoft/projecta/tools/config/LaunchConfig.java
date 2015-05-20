@@ -49,6 +49,11 @@ public final class LaunchConfig {
             return this;
         }
 
+        public Builder addOutDir(String outDir) {
+            mConfigInstance.mOutdirPath = outDir;
+            return this;
+        }
+
         public Builder addTakehome(String takehomePath) {
             mConfigInstance.mTakehomeScriptPath = takehomePath;
             return this;
@@ -69,12 +74,6 @@ public final class LaunchConfig {
             }
             if (mConfigInstance.mInjectionScriptPath == null) {
                 mConfigInstance.mInjectionScriptPath = "\\\\pan\\arcadia\\team\\users\\chunwang\\Injection\\autoInjection";
-            }
-            if (mConfigInstance.mDeviceIPAddr == null) {
-                mConfigInstance.mDeviceIPAddr = "127.0.0.1";
-            }
-            if (mConfigInstance.mOutdirPath == null) {
-                mConfigInstance.mOutdirPath = System.getProperty("user.dir");
             }
             logger.fine(String.format("Launch config loaded as\n%s", mConfigInstance));
             return mConfigInstance;
@@ -319,6 +318,13 @@ public final class LaunchConfig {
     }
 
     /**
+     * @return if has device ip address
+     */
+    public boolean hasDeviceIPAddr() {
+        return mDeviceIPAddr != null && mDeviceIPAddr.length() > 0;
+    }
+
+    /**
      * @param info AndroidManifestInfo of the apk
      */
     public void setApkPackageInfo(AndroidManifestInfo info) {
@@ -449,6 +455,17 @@ public final class LaunchConfig {
      */
     public void setShouldKillApp(boolean shouldKillApp) {
         mShouldKillApp = shouldKillApp;
+    }
+
+    /**
+     * Validate this config to see if it's runnable
+     * @return
+     */
+    public boolean validate() {
+        if (hasOriginApkPath() && hasDeviceIPAddr() && hasOutdirPath()) {
+            return true;
+        }
+        return false;
     }
 
     public String toString() {
