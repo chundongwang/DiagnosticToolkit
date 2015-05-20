@@ -22,7 +22,10 @@ public class CommandHelper {
     protected boolean mSuppressNonZeroException;
 
     public ProcessBuilder build(String... args) {
-        ProcessBuilder pb = new ProcessBuilder().command(args).directory(mWorkingDir.toFile());
+        String[] cmds = new String[args.length + 1];
+        cmds[0] = mExecutablePath.toString();
+        System.arraycopy(args, 0, cmds, 1, args.length);
+        ProcessBuilder pb = new ProcessBuilder().command(cmds).directory(mWorkingDir.toFile());
         return pb;
     }
 
@@ -51,28 +54,19 @@ public class CommandHelper {
 
     public String exec(String arg1, String... args) throws InterruptedException, IOException,
             ExecuteException {
-        String[] cmds = new String[args.length + 2];
-        cmds[0] = mExecutablePath.toString();
-        cmds[1] = arg1;
-        System.arraycopy(args, 0, cmds, 2, args.length);
+        String[] cmds = new String[args.length + 1];
+        cmds[0] = arg1;
+        System.arraycopy(args, 0, cmds, 1, args.length);
 
         return launch(build(cmds), mCommandName + " " + arg1);
     }
 
     public String exec(String... args) throws InterruptedException, IOException, ExecuteException {
-        String[] cmds = new String[args.length + 1];
-        cmds[0] = mExecutablePath.toString();
-        System.arraycopy(args, 0, cmds, 1, args.length);
-
-        return launch(build(cmds), mCommandName);
+        return launch(build(args), mCommandName);
     }
 
     public String exec(String arg) throws InterruptedException, IOException, ExecuteException {
-        String[] cmds = new String[2];
-        cmds[0] = mExecutablePath.toString();
-        cmds[1] = arg;
-
-        return launch(build(cmds), mCommandName);
+        return launch(build(arg), mCommandName);
     }
 
     public String getWorkingDir() {

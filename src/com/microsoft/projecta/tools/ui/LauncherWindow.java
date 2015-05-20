@@ -102,23 +102,29 @@ public class LauncherWindow {
                 @Override
                 public void run() {
                     // build launch config from default of the specified branch
-                    final LaunchConfig config = new LaunchConfig.Builder(branch).addOutDir(System.getProperty("user.dir"))
-                            .build();
+                    final LaunchConfig config = new LaunchConfig.Builder(branch).addOutDir(
+                            System.getProperty("user.dir")).build();
                     display.asyncExec(new Runnable() {
                         @Override
                         public void run() {
                             syncConfigToUI(config);
                         }
                     });
-                    
+
                     // get device ip
-                    final StringBuilder deviceIpAddr = new StringBuilder("( Need the non-loopback IP address )");
+                    final StringBuilder deviceIpAddr = new StringBuilder(
+                            "( Need the non-loopback IP address )");
                     try {
-                        TshellHelper tshell = TshellHelper.getInstance(System.getProperty("user.dir"));
-                        deviceIpAddr.delete(0, deviceIpAddr.length());
-                        deviceIpAddr.append(tshell.getIpAddr());
+                        TshellHelper tshell = TshellHelper.getInstance(System
+                                .getProperty("user.dir"));
+                        String ipAddr = tshell.getIpAddr();
+                        if (ipAddr != null) {
+                            deviceIpAddr.delete(0, deviceIpAddr.length());
+                            deviceIpAddr.append(ipAddr);
+                        }
                     } catch (IOException | InterruptedException | ExecuteException e) {
                         // swallow
+                        e.printStackTrace();
                     }
                     display.asyncExec(new Runnable() {
                         @Override
@@ -282,7 +288,9 @@ public class LauncherWindow {
                 syncConfigToUI();
             }
         });
-        mComboDevice.setItems(new String[] {"( loading... )"});
+        mComboDevice.setItems(new String[] {
+            "( loading... )"
+        });
         mComboDevice.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, false, 2, 1));
         mComboDevice.select(0);
 

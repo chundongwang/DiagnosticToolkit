@@ -9,7 +9,7 @@ import java.nio.file.Paths;
 public class TshellHelper extends CommandHelper {
 
     public final static String DEFAULT_POWERSHELL = "C:\\windows\\SysWOW64\\WindowsPowerShell\\v1.0\\powershell.exe";
-    public final static String REG_PATH_POWERSHELL_KEY = "HKLM\\SOFTWARE\\Microsoft\\PowerShell\\1\\PowerShellEngine";
+    public final static String REG_PATH_POWERSHELL_KEY = "HKLM\\SOFTWARE\\Wow6432Node\\Microsoft\\PowerShell\\1\\PowerShellEngine";
     public final static String REG_PATH_POWERSHELL_VALUE = "ApplicationBase";
     public final static String REG_PATH_POWERSHELL_TYPE = "REG_SZ";
     public final static String GRABLOGS = "\\\\pan\\arcadia\\team\\aowselfhost\\Tools\\GrabLogs\\GrabLogs.ps1";

@@ -102,6 +102,8 @@ public class ApkMainLauncher extends WorkFlowStage {
      */
     @Override
     protected ProcessBuilder startWorkerProcess() {
+        StringBuilder componentName = new StringBuilder();
+        componentName.append(mConfig.getActivityToLaunch());
         return new ProcessBuilder().command(
                 join(mConfig.getUnzippedSdkToolsPath(), "SDK_19.1.0", "platform-tools", "adb.exe"),
                 "shell", "am", "start", "-a", "android.intent.action.MAIN", "-c",
