@@ -16,6 +16,7 @@ import org.eclipse.wb.swt.SWTResourceManager;
 import org.eclipse.swt.layout.FillLayout;
 import org.eclipse.swt.widgets.Menu;
 import org.eclipse.swt.widgets.MenuItem;
+import org.eclipse.swt.graphics.Point;
 
 public class SimplisticLauncher {
     private static Text mtext;
@@ -29,7 +30,8 @@ public class SimplisticLauncher {
     public static void main(String[] args) {
         Display display = Display.getDefault();
         Shell shell = new Shell();
-        shell.setSize(588, 258);
+        shell.setMinimumSize(new Point(509, 191));
+        shell.setSize(509, 191);
         shell.setText("SWT Application");
         shell.setLayout(new GridLayout(2, false));
         
