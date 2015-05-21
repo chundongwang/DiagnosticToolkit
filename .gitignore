@@ -1,6 +1,7 @@
 .classpath
 .project
 .settings
-bin
+*.class
+Thumbs.db
 dist
-inject
+tmp
