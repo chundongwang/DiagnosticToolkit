@@ -6,6 +6,7 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.List;
 import java.util.logging.Logger;
@@ -459,11 +460,18 @@ public final class LaunchConfig {
 
     /**
      * Validate this config to see if it's runnable
+     * 
      * @return
      */
     public boolean validate() {
         if (hasOriginApkPath() && hasDeviceIPAddr() && hasOutdirPath()) {
-            return true;
+            if (Files.isReadable(Paths.get(getOriginApkPath()))
+                    && Files.isDirectory(Paths.get(getOutdirPath()))) {
+                if (getDeviceIPAddr().equalsIgnoreCase("usb")
+                        || getDeviceIPAddr().matches("[0-9]+\\.[0-9]+\\.[0-9]+\\.[0-9]+")) {
+                    return true;
+                }
+            }
         }
         return false;
     }

@@ -1,8 +1,6 @@
 
 package com.microsoft.projecta.tools.ui;
 
-import java.awt.Dimension;
-import java.awt.Toolkit;
 import java.io.IOException;
 import java.util.List;
 
@@ -23,9 +21,7 @@ import org.eclipse.swt.layout.RowLayout;
 import org.eclipse.swt.widgets.Button;
 import org.eclipse.swt.widgets.Combo;
 import org.eclipse.swt.widgets.Composite;
-import org.eclipse.swt.widgets.DirectoryDialog;
 import org.eclipse.swt.widgets.Display;
-import org.eclipse.swt.widgets.FileDialog;
 import org.eclipse.swt.widgets.Group;
 import org.eclipse.swt.widgets.Label;
 import org.eclipse.swt.widgets.MessageBox;
@@ -39,6 +35,7 @@ import org.xmlpull.v1.XmlPullParserException;
 import com.microsoft.projecta.tools.common.AndroidManifestInfo;
 import com.microsoft.projecta.tools.common.ExecuteException;
 import com.microsoft.projecta.tools.common.TshellHelper;
+import com.microsoft.projecta.tools.common.Utils;
 import com.microsoft.projecta.tools.config.Branch;
 import com.microsoft.projecta.tools.config.LaunchConfig;
 
@@ -132,7 +129,7 @@ public class LauncherWindow {
             // swallow
             e.printStackTrace();
         }
-        
+
         display.asyncExec(new Runnable() {
             @Override
             public void run() {
@@ -165,14 +162,8 @@ public class LauncherWindow {
         btnOriginApk.addSelectionListener(new SelectionAdapter() {
             @Override
             public void widgetSelected(SelectionEvent evt) {
-                FileDialog openApkFileDialog = new FileDialog(shlDiagnosticLauncher, SWT.OPEN);
-                openApkFileDialog.setText("Find the original Apk");
-                openApkFileDialog.setFilterPath(System.getProperty("user.dir"));
-                String[] filterExt = {
-                        "*.apk"
-                };
-                openApkFileDialog.setFilterExtensions(filterExt);
-                String originApkPath = openApkFileDialog.open();
+                String originApkPath = Utils.pickApkFile("Find Apk", "Find the original Apk",
+                        System.getProperty("user.dir"), shlDiagnosticLauncher);
                 if (originApkPath != null) {
                     mConfig.setOriginApkPath(originApkPath);
                     try {
@@ -197,10 +188,11 @@ public class LauncherWindow {
         btnOutputDir.addSelectionListener(new SelectionAdapter() {
             @Override
             public void widgetSelected(SelectionEvent e) {
-                String outdirPath = pickDirectory(
-                        "Pick the output dir",
-                        "Select a folder for drop injected apk, various log files and screen shot images.",
-                        mConfig.getOutdirPath());
+                String outdirPath = Utils
+                        .pickDirectory(
+                                "Pick the output dir",
+                                "Select a folder for drop injected apk, various log files and screen shot images.",
+                                mConfig.getOutdirPath(), shlDiagnosticLauncher);
                 if (outdirPath != null) {
                     mConfig.setOutdirPath(outdirPath);
                     syncConfigToUI();
@@ -255,9 +247,9 @@ public class LauncherWindow {
         btnBuildFinder.addSelectionListener(new SelectionAdapter() {
             @Override
             public void widgetSelected(SelectionEvent e) {
-                String buildDropPath = pickDirectory("Pick the build drop dir",
+                String buildDropPath = Utils.pickDirectory("Pick the build drop dir",
                         "Select a folder either from nightly build or your aosp output folder.",
-                        mConfig.getBuildDropPath());
+                        mConfig.getBuildDropPath(), shlDiagnosticLauncher);
                 if (buildDropPath != null) {
                     mConfig.setBuildDropPath(buildDropPath);
                     syncConfigToUI();
@@ -344,9 +336,9 @@ public class LauncherWindow {
         btnTakehomeScript.addSelectionListener(new SelectionAdapter() {
             @Override
             public void widgetSelected(SelectionEvent e) {
-                String takehomePath = pickDirectory("Pick the take home dir",
+                String takehomePath = Utils.pickDirectory("Pick the take home dir",
                         "Select a folder with takehome setup scripts.",
-                        mConfig.getTakehomeScriptPath());
+                        mConfig.getTakehomeScriptPath(), shlDiagnosticLauncher);
                 if (takehomePath != null) {
                     mConfig.setTakehomeScriptPath(takehomePath);
                     syncConfigToUI();
@@ -364,8 +356,9 @@ public class LauncherWindow {
         btnSdkTools.addSelectionListener(new SelectionAdapter() {
             @Override
             public void widgetSelected(SelectionEvent e) {
-                String sdkToolPath = pickDirectory("Pick the sdk tool dir",
-                        "Select a folder with Project A sdk tools.", mConfig.getSdkToolsPath());
+                String sdkToolPath = Utils.pickDirectory("Pick the sdk tool dir",
+                        "Select a folder with Project A sdk tools.", mConfig.getSdkToolsPath(),
+                        shlDiagnosticLauncher);
                 if (sdkToolPath != null) {
                     mConfig.setSdkToolsPath(sdkToolPath);
                     syncConfigToUI();
@@ -384,9 +377,9 @@ public class LauncherWindow {
         btnInjectionScript.addSelectionListener(new SelectionAdapter() {
             @Override
             public void widgetSelected(SelectionEvent e) {
-                String injectScriptPath = pickDirectory("Pick the injection path",
+                String injectScriptPath = Utils.pickDirectory("Pick the injection path",
                         "Select a folder with injection scripts and related tools.",
-                        mConfig.getInjectionScriptPath());
+                        mConfig.getInjectionScriptPath(), shlDiagnosticLauncher);
                 if (injectScriptPath != null) {
                     mConfig.setInjectionScriptPath(injectScriptPath);
                     syncConfigToUI();
@@ -472,13 +465,6 @@ public class LauncherWindow {
         initializeConfig(Branch.Develop);
     }
 
-    public void CenteredFrame(Shell objFrame) {
-        Dimension objDimension = Toolkit.getDefaultToolkit().getScreenSize();
-        int iCoordX = (objDimension.width - objFrame.getSize().x) / 2;
-        int iCoordY = (objDimension.height - objFrame.getSize().y) / 2;
-        objFrame.setLocation(iCoordX, iCoordY);
-    }
-
     /**
      * Open the window.
      */
@@ -488,30 +474,12 @@ public class LauncherWindow {
         init();
         shlDiagnosticLauncher.open();
         shlDiagnosticLauncher.layout();
-        CenteredFrame(shlDiagnosticLauncher);
+        Utils.CenteredFrame(shlDiagnosticLauncher);
         while (!shlDiagnosticLauncher.isDisposed()) {
             if (!display.readAndDispatch()) {
                 display.sleep();
             }
         }
-    }
-
-    /**
-     * Helper to pick a directory
-     * 
-     * @param title DirectoryDialog title
-     * @param msg DirectoryDialog message
-     * @param default_value default folder to start with
-     * @return folder path user picked
-     */
-    private String pickDirectory(String title, String msg, String default_value) {
-        DirectoryDialog dirPickerDialog = new DirectoryDialog(this.shlDiagnosticLauncher);
-        dirPickerDialog.setText(title);
-        dirPickerDialog.setMessage(msg);
-        if (default_value != null) {
-            dirPickerDialog.setFilterPath(default_value);
-        }
-        return dirPickerDialog.open();
     }
 
     private void syncConfigToUI() {
