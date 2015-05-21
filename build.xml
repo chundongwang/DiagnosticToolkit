@@ -1,56 +1,62 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
 <project basedir="." default="build" name="DiagnosticToolkit">
-    <property environment="env"/>
-    <property name="debuglevel" value="source,lines,vars"/>
-    <property name="binOutput" value="bin"/>
-    <property name="distOutput" value="dist"/>
-	<property name="libs" value="libs"/>
-    <property name="target" value="1.7"/>
-    <property name="source" value="1.7"/>
-    <path id="DiagnosticToolkit.classpath">
-        <pathelement location="${binOutput}"/>
-        <pathelement location="swing2swt.jar"/>
-        <pathelement location="${libs}/APKParser.jar"/>
-        <pathelement location="${libs}/swt.jar"/>
-        <!-- Debug
+	<property environment="env" />
+	<property name="debuglevel" value="source,lines,vars" />
+	<property name="bin.dir" value="bin" />
+	<property name="dist.dir" value="dist" />
+	<property name="libs" value="libs" />
+	<property name="target" value="1.7" />
+	<property name="source" value="1.7" />
+	<path id="DiagnosticToolkit.classpath">
+		<pathelement location="${bin.dir}" />
+		<pathelement location="${libs}/swing2swt.jar" />
+		<pathelement location="${libs}/APKParser.jar" />
+		<pathelement location="${libs}/swt.jar" />
+		<!-- Debug
         <pathelement location="${libs}/swt-debug.jar"/>
         -->
-    </path>
-    <target name="init">
-        <mkdir dir="${binOutput}"/>
-        <copy includeemptydirs="false" todir="bin">
-            <fileset dir="src">
-                <exclude name="**/*.java"/>
-            </fileset>
-        </copy>
-    </target>
-    <target name="clean">
-        <delete dir="${binOutput}"/>
-        <delete dir="${distOutput}"/>
-    </target>
-    <target depends="build-project" name="build"/>
-    <target depends="init" name="build-project">
-        <echo message="${ant.project.name}: ${ant.file}"/>
-        <javac debug="true" debuglevel="${debuglevel}" destdir="${binOutput}" includeantruntime="false" source="${source}" target="${target}">
-            <src path="src"/>
-            <classpath refid="DiagnosticToolkit.classpath"/>
-        </javac>
-    </target>
-    <target depends="build" name="create_run_jar">
-        <jar destfile="${distOutput}/DiagnosticLauncherUI.jar">
-            <manifest>
-                <attribute name="Main-Class" value="com.microsoft.projecta.tools.ui.LauncherWindow"/>
-                <attribute name="Class-Path" value=". ${libs}/swt.jar ${libs}/swing2swt.jar ${libs}/APKParser.jar"/>
-            </manifest>
-            <fileset dir="C:/Users/chunwang/workspace-luna/DiagnosticToolkit/bin"/>
-        </jar>
-        <delete dir="${distOutput}/${libs}"/>
-        <mkdir dir="${distOutput}/${libs}"/>
-        <copy file="${libs}/APKParser.jar" todir="${distOutput}/${libs}"/>
-        <copy file="${libs}/swt.jar" todir="${distOutput}/${libs}"/>
-        <copy file="${libs}/jython-standalone-2.7.0.jar" todir="${distOutput}/${libs}"/>
-        <copy file="${libs}/jython.bat" todir="${distOutput}/${libs}"/>
-        <copy file="swing2swt.jar" todir="${distOutput}/${libs}"/>
-    </target>
-	<!-- TODO: launch4j: http://launch4j.sourceforge.net/docs.html#Ant_task -->
+	</path>
+	<property name="launch4j.dir" location="buildTools" />
+	<!-- This will require java 1.8 and eclipse builtin ant doesn't work without modification
+	<taskdef name="launch4j" classname="net.sf.launch4j.ant.Launch4jTask" classpath="${launch4j.dir}/launch4j.jar:${launch4j.dir}/lib/xstream.jar" />
+	-->
+	<target name="init">
+		<mkdir dir="${bin.dir}" />
+		<copy includeemptydirs="false" todir="bin">
+			<fileset dir="src">
+				<exclude name="**/*.java" />
+			</fileset>
+		</copy>
+	</target>
+	<target name="clean">
+		<delete dir="${bin.dir}" />
+		<delete dir="${dist.dir}" />
+	</target>
+	<target depends="build-project" name="build" />
+	<target depends="init" name="build-project">
+		<echo message="${ant.project.name}: ${ant.file}" />
+		<javac debug="true" debuglevel="${debuglevel}" destdir="${bin.dir}" includeantruntime="false" source="${source}" target="${target}">
+			<src path="src" />
+			<classpath refid="DiagnosticToolkit.classpath" />
+		</javac>
+	</target>
+	<target depends="build" name="create_run_jar">
+		<jar destfile="${dist.dir}/DiagnosticLauncherUI.jar">
+			<manifest>
+				<attribute name="Main-Class" value="com.microsoft.projecta.tools.ui.LauncherWindow" />
+				<attribute name="Class-Path" value=". ${libs}/swt.jar ${libs}/swing2swt.jar ${libs}/APKParser.jar" />
+			</manifest>
+			<fileset dir="${bin.dir}" />
+		</jar>
+		<delete dir="${dist.dir}/${libs}" />
+		<mkdir dir="${dist.dir}/${libs}" />
+		<copy todir="${dist.dir}/${libs}">
+			<fileset dir="${libs}" />
+		</copy>
+		<!-- TODO: launch4j: http://launch4j.sourceforge.net/docs.html#Ant_task 
+		<launch4j configFile="DiagnosticUI.launch4j.xml" outfile="${dist.dir}/DiagnosticLauncherUI.exe" />-->
+		<exec executable="${launch4j.dir}/launch4jc.exe">
+			<arg value="DiagnosticUI.launch4j.xml" />
+		</exec>
+	</target>
 </project>
