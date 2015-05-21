@@ -40,10 +40,10 @@
 			<classpath refid="DiagnosticToolkit.classpath" />
 		</javac>
 	</target>
-	<target depends="build" name="create_run_jar">
+	<target depends="build" name="dist">
 		<jar destfile="${dist.dir}/DiagnosticLauncherUI.jar">
 			<manifest>
-				<attribute name="Main-Class" value="com.microsoft.projecta.tools.ui.LauncherWindow" />
+				<attribute name="Main-Class" value="com.microsoft.projecta.tools.ui.SimplisticLauncher" />
 				<attribute name="Class-Path" value=". ${libs}/swt.jar ${libs}/swing2swt.jar ${libs}/APKParser.jar" />
 			</manifest>
 			<fileset dir="${bin.dir}" />
@@ -53,7 +53,7 @@
 		<copy todir="${dist.dir}/${libs}">
 			<fileset dir="${libs}" />
 		</copy>
-		<!-- TODO: launch4j: http://launch4j.sourceforge.net/docs.html#Ant_task 
+		<!-- This will require java 1.8 and eclipse builtin ant doesn't work without modification
 		<launch4j configFile="DiagnosticUI.launch4j.xml" outfile="${dist.dir}/DiagnosticLauncherUI.exe" />-->
 		<exec executable="${launch4j.dir}/launch4jc.exe">
 			<arg value="DiagnosticUI.launch4j.xml" />
