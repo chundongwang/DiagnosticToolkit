@@ -1,6 +1,8 @@
 
 package com.microsoft.projecta.tools.ui;
 
+import java.awt.Dimension;
+import java.awt.Toolkit;
 import java.io.IOException;
 import java.util.List;
 
@@ -104,41 +106,40 @@ public class LauncherWindow {
             new Thread(new Runnable() {
                 @Override
                 public void run() {
-                    // build launch config from default of the specified branch
-                    final LaunchConfig config = new LaunchConfig.Builder(branch).addOutDir(
-                            System.getProperty("user.dir")).build();
-                    display.asyncExec(new Runnable() {
-                        @Override
-                        public void run() {
-                            syncConfigToUI(config);
-                        }
-                    });
-
-                    // get device ip
-                    final StringBuilder deviceIpAddr = new StringBuilder(
-                            "( Need the non-loopback IP address )");
-                    try {
-                        TshellHelper tshell = TshellHelper.getInstance(System
-                                .getProperty("user.dir"));
-                        String ipAddr = tshell.getIpAddr();
-                        if (ipAddr != null) {
-                            deviceIpAddr.delete(0, deviceIpAddr.length());
-                            deviceIpAddr.append(ipAddr);
-                        }
-                    } catch (IOException | InterruptedException | ExecuteException e) {
-                        // swallow
-                        e.printStackTrace();
-                    }
-                    display.asyncExec(new Runnable() {
-                        @Override
-                        public void run() {
-                            mConfig.setDeviceIPAddr(deviceIpAddr.toString());
-                            syncConfigToUI();
-                        }
-                    });
+                    initializeConfig(branch);
                 }
             }).start();
         }
+    }
+
+    private void initializeConfig(Branch branch) {
+        // build launch config from default of the specified branch
+        final LaunchConfig config = new LaunchConfig.Builder(branch).addOutDir(
+                System.getProperty("user.dir")).build();
+
+        // get device ip
+        final StringBuilder deviceIpAddr = new StringBuilder(
+                "( Need the non-loopback IP address )");
+        try {
+            TshellHelper tshell = TshellHelper.getInstance(System
+                    .getProperty("user.dir"));
+            String ipAddr = tshell.getIpAddr();
+            if (ipAddr != null) {
+                deviceIpAddr.delete(0, deviceIpAddr.length());
+                deviceIpAddr.append(ipAddr);
+            }
+        } catch (IOException | InterruptedException | ExecuteException e) {
+            // swallow
+            e.printStackTrace();
+        }
+        
+        display.asyncExec(new Runnable() {
+            @Override
+            public void run() {
+                config.setDeviceIPAddr(deviceIpAddr.toString());
+                syncConfigToUI(config);
+            }
+        });
     }
 
     /**
@@ -168,7 +169,7 @@ public class LauncherWindow {
                 openApkFileDialog.setText("Find the original Apk");
                 openApkFileDialog.setFilterPath(System.getProperty("user.dir"));
                 String[] filterExt = {
-                    "*.apk"
+                        "*.apk"
                 };
                 openApkFileDialog.setFilterExtensions(filterExt);
                 String originApkPath = openApkFileDialog.open();
@@ -292,7 +293,7 @@ public class LauncherWindow {
             }
         });
         mComboDevice.setItems(new String[] {
-            "( loading... )"
+                "( loading... )"
         });
         mComboDevice.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, false, 2, 1));
         mComboDevice.select(0);
@@ -467,7 +468,15 @@ public class LauncherWindow {
 
     private void init() {
         // On UI thread
-        changeBranch(Branch.Develop, true);
+        // changeBranch(Branch.Develop, true);
+        initializeConfig(Branch.Develop);
+    }
+
+    public void CenteredFrame(Shell objFrame) {
+        Dimension objDimension = Toolkit.getDefaultToolkit().getScreenSize();
+        int iCoordX = (objDimension.width - objFrame.getSize().x) / 2;
+        int iCoordY = (objDimension.height - objFrame.getSize().y) / 2;
+        objFrame.setLocation(iCoordX, iCoordY);
     }
 
     /**
@@ -479,6 +488,7 @@ public class LauncherWindow {
         init();
         shlDiagnosticLauncher.open();
         shlDiagnosticLauncher.layout();
+        CenteredFrame(shlDiagnosticLauncher);
         while (!shlDiagnosticLauncher.isDisposed()) {
             if (!display.readAndDispatch()) {
                 display.sleep();
