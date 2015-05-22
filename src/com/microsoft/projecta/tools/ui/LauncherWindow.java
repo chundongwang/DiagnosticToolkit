@@ -33,8 +33,6 @@ import org.eclipse.wb.swt.SWTResourceManager;
 import org.xmlpull.v1.XmlPullParserException;
 
 import com.microsoft.projecta.tools.common.AndroidManifestInfo;
-import com.microsoft.projecta.tools.common.ExecuteException;
-import com.microsoft.projecta.tools.common.TshellHelper;
 import com.microsoft.projecta.tools.common.Utils;
 import com.microsoft.projecta.tools.config.Branch;
 import com.microsoft.projecta.tools.config.LaunchConfig;
@@ -104,6 +102,7 @@ public class LauncherWindow {
                 @Override
                 public void run() {
                     initializeConfig(branch);
+                    initializeDeviceIP();
                 }
             }).start();
         }
@@ -114,27 +113,22 @@ public class LauncherWindow {
         final LaunchConfig config = new LaunchConfig.Builder(branch).addOutDir(
                 System.getProperty("user.dir")).build();
 
-        // get device ip
-        final StringBuilder deviceIpAddr = new StringBuilder(
-                "( Need the non-loopback IP address )");
-        try {
-            TshellHelper tshell = TshellHelper.getInstance(System
-                    .getProperty("user.dir"));
-            String ipAddr = tshell.getIpAddr();
-            if (ipAddr != null) {
-                deviceIpAddr.delete(0, deviceIpAddr.length());
-                deviceIpAddr.append(ipAddr);
-            }
-        } catch (IOException | InterruptedException | ExecuteException e) {
-            // swallow
-            e.printStackTrace();
-        }
-
         display.asyncExec(new Runnable() {
             @Override
             public void run() {
-                config.setDeviceIPAddr(deviceIpAddr.toString());
                 syncConfigToUI(config);
+            }
+        });
+    }
+    
+    private void initializeDeviceIP() {
+        // get device ip
+        final String deviceIpAddr = Utils.retrieveDeviceIPAddr();
+        display.asyncExec(new Runnable() {
+            @Override
+            public void run() {
+                mConfig.setDeviceIPAddr(deviceIpAddr);
+                syncConfigToUI();
             }
         });
     }
@@ -285,7 +279,7 @@ public class LauncherWindow {
             }
         });
         mComboDevice.setItems(new String[] {
-                "( loading... )"
+            "( loading... )"
         });
         mComboDevice.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, false, 2, 1));
         mComboDevice.select(0);
@@ -461,8 +455,14 @@ public class LauncherWindow {
 
     private void init() {
         // On UI thread
-        // changeBranch(Branch.Develop, true);
         initializeConfig(Branch.Develop);
+        // on UI thread
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                initializeDeviceIP();
+            }
+        }).start();
     }
 
     /**

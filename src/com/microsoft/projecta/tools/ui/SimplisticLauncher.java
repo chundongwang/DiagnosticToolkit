@@ -32,7 +32,7 @@ import com.microsoft.projecta.tools.config.Branch;
 import com.microsoft.projecta.tools.config.LaunchConfig;
 
 public class SimplisticLauncher {
-    private final static Point FIXED_SIZE = new Point(510, 260);
+    private final static Point FIXED_SIZE = new Point(325, 210);
     private Display display;
     private Shell shlSimplisticLauncher;
     private Text mTextRawApk;
@@ -60,6 +60,18 @@ public class SimplisticLauncher {
         display.asyncExec(new Runnable() {
             @Override
             public void run() {
+                if (mConfig.hasDeviceIPAddr()
+                        && !mTextDeviceIP.getText().equals(mConfig.getDeviceIPAddr())) {
+                    mTextDeviceIP.setText(mConfig.getDeviceIPAddr());
+                }
+                if (mConfig.hasOriginApkPath()
+                        && !mTextRawApk.getText().equals(mConfig.getOriginApkPath())) {
+                    mTextRawApk.setText(mConfig.getOriginApkPath());
+                }
+                if (mConfig.hasOutdirPath()
+                        && !mTextOutDir.getText().equals(mConfig.getOutdirPath())) {
+                    mTextOutDir.setText(mConfig.getOutdirPath());
+                }
                 mBtnGo.setEnabled(mConfig.validate());
             }
         });
@@ -73,11 +85,9 @@ public class SimplisticLauncher {
 
     private String retrieveDeviceIPAddress() {
         // get device ip
-        StringBuilder deviceIpAddr = new StringBuilder(
-                "( Need the non-loopback IP address )");
+        StringBuilder deviceIpAddr = new StringBuilder("( Need the non-loopback IP address )");
         try {
-            TshellHelper tshell = TshellHelper.getInstance(System
-                    .getProperty("user.dir"));
+            TshellHelper tshell = TshellHelper.getInstance(System.getProperty("user.dir"));
             String ipAddr = tshell.getIpAddr();
             if (ipAddr != null) {
                 deviceIpAddr.delete(0, deviceIpAddr.length());
@@ -144,7 +154,7 @@ public class SimplisticLauncher {
             }
         });
         shlSimplisticLauncher.setMinimumSize(FIXED_SIZE);
-        shlSimplisticLauncher.setSize(510, 260);
+        shlSimplisticLauncher.setSize(325, 210);
         shlSimplisticLauncher.setText("Diagnostic Tool");
         shlSimplisticLauncher.setLayout(new GridLayout(2, false));
 

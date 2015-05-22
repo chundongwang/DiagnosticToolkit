@@ -43,7 +43,7 @@
 	<target depends="build" name="dist">
 		<jar destfile="${dist.dir}/DiagnosticLauncherUI.jar">
 			<manifest>
-				<attribute name="Main-Class" value="com.microsoft.projecta.tools.ui.SimplisticLauncher" />
+				<attribute name="Main-Class" value="com.microsoft.projecta.tools.ui.LauncherWindow" />
 				<attribute name="Class-Path" value=". ${libs}/swt.jar ${libs}/swing2swt.jar ${libs}/APKParser.jar" />
 			</manifest>
 			<fileset dir="${bin.dir}" />

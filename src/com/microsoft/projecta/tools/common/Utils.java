@@ -2,6 +2,7 @@ package com.microsoft.projecta.tools.common;
 
 import java.awt.Dimension;
 import java.awt.Toolkit;
+import java.io.IOException;
 import java.nio.file.Path;
 
 import org.eclipse.swt.SWT;
@@ -61,5 +62,21 @@ public class Utils {
         };
         openApkFileDialog.setFilterExtensions(filterExt);
         return openApkFileDialog.open();
+    }
+    
+    public static String retrieveDeviceIPAddr() {
+        final StringBuilder deviceIpAddr = new StringBuilder("( Need the non-loopback IP address )");
+        try {
+            TshellHelper tshell = TshellHelper.getInstance(System.getProperty("user.dir"));
+            String ipAddr = tshell.getIpAddr();
+            if (ipAddr != null) {
+                deviceIpAddr.delete(0, deviceIpAddr.length());
+                deviceIpAddr.append(ipAddr);
+            }
+        } catch (IOException | InterruptedException | ExecuteException e) {
+            // swallow
+            e.printStackTrace();
+        }
+        return deviceIpAddr.toString();
     }
 }
