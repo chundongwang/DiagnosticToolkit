@@ -40,6 +40,8 @@ public class SimplisticLauncher {
     private Text mTextDeviceIP;
     private Button mBtnGo;
     private LaunchConfig mConfig;
+    
+    private String mDesiredOutDir;
 
     /**
      * @return the config
@@ -53,10 +55,10 @@ public class SimplisticLauncher {
      */
     public synchronized void setConfig(LaunchConfig config) {
         mConfig = config;
-        resyncConfig();
+        syncConfigToUI();
     }
 
-    private void resyncConfig() {
+    private void syncConfigToUI() {
         display.asyncExec(new Runnable() {
             @Override
             public void run() {
@@ -108,10 +110,10 @@ public class SimplisticLauncher {
      */
     public static void main(String[] args) {
         try {
-            if (args.length > 0) {
-                System.setProperty("user.dir", args[0]);
-            }
             SimplisticLauncher window = new SimplisticLauncher();
+            if (args.length > 0) {
+                window.setDesiredOutDir(args[0]);
+            }
             window.open();
         } catch (Exception e) {
             e.printStackTrace();
@@ -127,7 +129,7 @@ public class SimplisticLauncher {
         display = Display.getDefault();
         createContents();
 
-        initializeConfig(Branch.Develop);
+        //initializeConfig(Branch.Develop);
 
         shlSimplisticLauncher.open();
         shlSimplisticLauncher.layout();
@@ -172,7 +174,7 @@ public class SimplisticLauncher {
                     e1.printStackTrace();
                     throw new RuntimeException("AndroidManifest parsing failed.", e1);
                 }
-                resyncConfig();
+                syncConfigToUI();
             }
         });
         mTextRawApk.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, false, 1, 1));
@@ -196,7 +198,7 @@ public class SimplisticLauncher {
         mTextOutDir.addModifyListener(new ModifyListener() {
             public void modifyText(ModifyEvent e) {
                 getConfig().setOutdirPath(((Text) e.widget).getText());
-                resyncConfig();
+                syncConfigToUI();
             }
         });
         mTextOutDir.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, false, 1, 1));
@@ -223,7 +225,7 @@ public class SimplisticLauncher {
         mTextDeviceIP.addModifyListener(new ModifyListener() {
             public void modifyText(ModifyEvent e) {
                 getConfig().setDeviceIPAddr(((Text) e.widget).getText());
-                resyncConfig();
+                syncConfigToUI();
             }
         });
         mTextDeviceIP.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, false, 1, 1));
@@ -233,7 +235,7 @@ public class SimplisticLauncher {
             @Override
             public void widgetSelected(SelectionEvent e) {
                 mTextDeviceIP.setText(retrieveDeviceIPAddress());
-                resyncConfig();
+                syncConfigToUI();
             }
         });
         btnRefresh.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, false, false, 1, 1));
@@ -271,5 +273,19 @@ public class SimplisticLauncher {
             }
         });
         mntmSettings.setText("Settings");
+    }
+
+    /**
+     * @return the desiredOutDir
+     */
+    public String getDesiredOutDir() {
+        return mDesiredOutDir;
+    }
+
+    /**
+     * @param desiredOutDir the desiredOutDir to set
+     */
+    public void setDesiredOutDir(String desiredOutDir) {
+        mDesiredOutDir = desiredOutDir;
     }
 }
