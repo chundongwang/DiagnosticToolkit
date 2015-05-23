@@ -76,6 +76,11 @@ public final class LaunchConfig {
             if (mConfigInstance.mInjectionScriptPath == null) {
                 mConfigInstance.mInjectionScriptPath = "\\\\pan\\arcadia\\team\\users\\chunwang\\Injection\\autoInjection";
             }
+            mConfigInstance.mShouldProvisionVM = false;
+            mConfigInstance.mShouldInject = true;
+            mConfigInstance.mShouldTakeSnapshot = false;
+            mConfigInstance.mShouldKillApp = false;
+            mConfigInstance.mSdkType = SdkType.GP_INTEROP;
             logger.fine(String.format("Launch config loaded as\n%s", mConfigInstance));
             return mConfigInstance;
         }
@@ -142,12 +147,9 @@ public final class LaunchConfig {
     private boolean mShouldInject;
     private boolean mShouldTakeSnapshot;
     private boolean mShouldKillApp;
+    private SdkType mSdkType;
 
     private LaunchConfig() {
-        mShouldProvisionVM = false;
-        mShouldInject = true;
-        mShouldTakeSnapshot = false;
-        mShouldKillApp = false;
     }
 
     public String getActivityToLaunch() {
@@ -456,6 +458,20 @@ public final class LaunchConfig {
      */
     public void setShouldKillApp(boolean shouldKillApp) {
         mShouldKillApp = shouldKillApp;
+    }
+
+    /**
+     * @return the sdkType
+     */
+    public SdkType getSdkType() {
+        return mSdkType;
+    }
+
+    /**
+     * @param sdkType the sdkType to set
+     */
+    public void setSdkType(SdkType sdkType) {
+        mSdkType = sdkType;
     }
 
     /**

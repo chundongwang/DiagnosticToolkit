@@ -251,7 +251,7 @@ public class SimplisticLauncher {
             public void widgetSelected(SelectionEvent e) {
                 LaunchProgressDialog dialog = new LaunchProgressDialog(shlSimplisticLauncher,
                         mConfig);
-                dialog.open();
+                mConfig = (LaunchConfig)dialog.open();
             }
         });
         mBtnGo.setFont(SWTResourceManager.getFont("Segoe UI", 12, SWT.NORMAL));
