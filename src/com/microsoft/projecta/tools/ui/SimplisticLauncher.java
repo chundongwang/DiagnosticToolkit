@@ -80,7 +80,7 @@ public class SimplisticLauncher {
     private void initializeConfig(Branch branch) {
         // build launch config from default of the specified branch
         setConfig(new LaunchConfig.Builder(branch).addOutDir(System.getProperty("user.dir"))
-                .addBuildDrop(retrieveDeviceIPAddress()).build());
+                .addDeviceIP(retrieveDeviceIPAddress()).build());
     }
 
     private String retrieveDeviceIPAddress() {

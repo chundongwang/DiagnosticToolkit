@@ -7,7 +7,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 
 public class WconnectHelper extends CommandHelper {
-    private final static String DEFAULT_PIN = "1234";
+    public final static String DEFAULT_PIN = "1234";
 
     private WconnectHelper(Path wcPath, Path workingDirPath) {
         super(wcPath, workingDirPath);

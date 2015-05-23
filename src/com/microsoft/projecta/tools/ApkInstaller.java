@@ -66,6 +66,8 @@ public final class ApkInstaller extends WorkFlowStage {
             mAdbHelper = AdbHelper.getInstance(mConfig.getUnzippedSdkToolsPath(),
                     mConfig.getOutdirPath());
             mAdbHelper.logcat("-c");
+            // uninstall first
+            mAdbHelper.uninstall(mConfig.getApkPackageName());
 
         } catch (InterruptedException | IOException e) {
             fireOnLogOutput(logger, Level.SEVERE, "Error occured while clearing logcat", e);

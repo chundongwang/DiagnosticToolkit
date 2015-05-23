@@ -11,6 +11,7 @@ import java.util.logging.Logger;
 import com.microsoft.projecta.tools.common.AdbHelper;
 import com.microsoft.projecta.tools.common.ExecuteException;
 import com.microsoft.projecta.tools.config.LaunchConfig;
+import com.microsoft.projecta.tools.workflow.WorkFlowResult;
 import com.microsoft.projecta.tools.workflow.WorkFlowStage;
 import com.microsoft.projecta.tools.workflow.WorkFlowStatus;
 
@@ -56,14 +57,15 @@ public class ApkMainLauncher extends WorkFlowStage {
      * Do some pre-check
      */
     @Override
-    public void execute() {
-        super.execute();
+    public WorkFlowResult execute() {
+        WorkFlowResult result = super.execute();
         try {
             Thread.sleep(3000);
         } catch (InterruptedException e) {
             // Cancelled by user
             fireOnLogOutput("Interupted while waiting after executed " + mExecutor.getWorkerProcDesc());
         }
+        return result;
     }
 
     @Override

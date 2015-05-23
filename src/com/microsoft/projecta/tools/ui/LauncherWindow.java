@@ -46,10 +46,10 @@ public class LauncherWindow {
      */
     public static void main(String[] args) {
         try {
-            if (args.length > 0) {
-                System.setProperty("user.dir", args[0]);
-            }
             LauncherWindow window = new LauncherWindow();
+            if (args.length > 0) {
+                window.setDesiredOutDir(args[0]);
+            }
             window.open();
         } catch (Exception e) {
             e.printStackTrace();
@@ -73,8 +73,9 @@ public class LauncherWindow {
     private Combo mComboActivities;
     private Label mLblPackagename;
     private Button mBtnKillApp;
-
     private Button mBtnGo;
+
+    private String mDesiredOutDir;
 
     /**
      * Change branch to specified one which might cause reloading all default configs. If we decided
@@ -110,8 +111,8 @@ public class LauncherWindow {
 
     private void initializeConfig(Branch branch) {
         // build launch config from default of the specified branch
-        final LaunchConfig config = new LaunchConfig.Builder(branch).addOutDir(
-                System.getProperty("user.dir")).build();
+        final LaunchConfig config = new LaunchConfig.Builder(branch).addOutDir(getDesiredOutDir())
+                .build();
 
         display.asyncExec(new Runnable() {
             @Override
@@ -120,7 +121,7 @@ public class LauncherWindow {
             }
         });
     }
-    
+
     private void initializeDeviceIP() {
         // get device ip
         final String deviceIpAddr = Utils.retrieveDeviceIPAddr();
@@ -536,5 +537,22 @@ public class LauncherWindow {
         if (mConfig.validate()) {
             mBtnGo.setEnabled(true);
         }
+    }
+
+    /**
+     * @return the desiredOutDir
+     */
+    public synchronized String getDesiredOutDir() {
+        if (mDesiredOutDir == null) {
+            mDesiredOutDir = System.getProperty("user.dir");
+        }
+        return mDesiredOutDir;
+    }
+
+    /**
+     * @param desiredOutDir the desiredOutDir to set
+     */
+    public synchronized void setDesiredOutDir(String desiredOutDir) {
+        mDesiredOutDir = desiredOutDir;
     }
 }

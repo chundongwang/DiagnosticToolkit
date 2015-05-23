@@ -23,6 +23,10 @@ public class AdbHelper extends CommandHelper {
     public void pull(String... args) throws InterruptedException, IOException, ExecuteException {
         exec("pull", args);
     }
+    
+    public void uninstall(String pkg_name) throws InterruptedException, IOException, ExecuteException {
+        exec("uninstall", pkg_name);
+    }
 
     public static AdbHelper getInstance(String sdkTools, String workingDir) throws IOException {
         Path adbPath = Paths.get(sdkTools).resolve(

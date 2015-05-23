@@ -3,6 +3,7 @@ package com.microsoft.projecta.tools.common;
 
 import java.io.IOException;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -11,7 +12,7 @@ import com.microsoft.projecta.tools.workflow.WorkFlowResult;
 public class CommandHelper {
 
     protected CommandHelper(Path executablePath, Path workingDir) {
-        mExecutablePath = executablePath.toAbsolutePath();
+        mExecutablePath = executablePath;
         mCommandName = Utils.getNameWithoutExtension(executablePath);
         mWorkingDir = workingDir;
     }
@@ -85,5 +86,9 @@ public class CommandHelper {
      */
     public void setSuppressNonZeroException(boolean suppressNonZeroException) {
         mSuppressNonZeroException = suppressNonZeroException;
+    }
+
+    public static CommandHelper getInstance(String executable, String workingDir) throws IOException {
+        return new CommandHelper(Paths.get(executable), Paths.get(workingDir));
     }
 }

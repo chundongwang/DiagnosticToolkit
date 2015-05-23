@@ -217,7 +217,8 @@ public final class FullLaunchManager implements WorkFlowProgressListener {
                     // grab log
                     try {
                         TshellHelper tshell = TshellHelper.getInstance(mConfig.getLogsDir());
-                        tshell.grabLogs();
+                        String output = tshell.grabLogs();
+                        mListener.onLogOutput(sender, output);
                     } catch (IOException | InterruptedException | ExecuteException e) {
                         mListener.onLogOutput(
                                 sender,

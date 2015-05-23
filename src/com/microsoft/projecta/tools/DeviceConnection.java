@@ -8,6 +8,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.Enumeration;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -15,6 +16,7 @@ import java.util.zip.ZipEntry;
 import java.util.zip.ZipException;
 import java.util.zip.ZipFile;
 
+import com.microsoft.projecta.tools.common.Utils;
 import com.microsoft.projecta.tools.common.WconnectHelper;
 import com.microsoft.projecta.tools.config.LaunchConfig;
 import com.microsoft.projecta.tools.config.OS;
@@ -73,17 +75,32 @@ public final class DeviceConnection extends WorkFlowStage {
             setup_result = true;
         } else {
             Path zippedSdk = getOsSubdirZipFile(mConfig.getSdkToolsPath());
+            Path zippedSdkVersion = zippedSdk.getParent().resolve(Paths.get("VERSION.txt"));
             Path unzippedSdkDir = path(mConfig.getOutdirPath(), "sdkTools");
-            if (Files.exists(unzippedSdkDir) && Files.isDirectory(unzippedSdkDir)) {
+            Path unzippedSdkVersion = unzippedSdkDir.resolve(Paths.get("VERSION.txt"));
+            if (Files.isRegularFile(zippedSdkVersion) && Files.isRegularFile(unzippedSdkVersion)) {
                 // TODO check if this is the same version as mConfig.getSdkToolsPath()
-                mConfig.setUnzippedSdkToolsPath(unzippedSdkDir.toAbsolutePath().toString());
-                setup_result = true;
-            } else {
+                try {
+                    if (Files.getLastModifiedTime(zippedSdkVersion).equals(
+                            Files.getLastModifiedTime(unzippedSdkVersion))) {
+                        // Already unzipped and same version
+                        mConfig.setUnzippedSdkToolsPath(unzippedSdkDir.toAbsolutePath().toString());
+                        setup_result = true;
+                    }
+                } catch (IOException e) {
+                    fireOnLogOutput(logger, Level.WARNING, "Cannot compare last modified time of "
+                            + zippedSdkVersion + " and " + unzippedSdkVersion + ". Will unzip again. ", e);
+                }
+            }
+            if (!setup_result) {
                 // Unzip
                 try {
+                    if (Files.exists(unzippedSdkDir)) {
+                        Utils.delete(unzippedSdkDir);
+                    }
                     unZipAll(zippedSdk.toFile(), unzippedSdkDir.toFile());
+                    Files.copy(zippedSdkVersion, unzippedSdkVersion);
                     mConfig.setUnzippedSdkToolsPath(unzippedSdkDir.toAbsolutePath().toString());
-
                     setup_result = true;
                 } catch (IOException e) {
                     // TODO clean up the unzipped folder?
@@ -116,7 +133,7 @@ public final class DeviceConnection extends WorkFlowStage {
     @Override
     protected ProcessBuilder startWorkerProcess() {
         // TODO save the log somewhere?
-        return mWcHelper.build(mConfig.getDeviceIPAddr());
+        return mWcHelper.build(mConfig.getDeviceIPAddr(), WconnectHelper.DEFAULT_PIN);
     }
 
     public void unZipAll(File zippedSdk, File unzippedSdkDir) throws ZipException, IOException {

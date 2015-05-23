@@ -52,8 +52,8 @@ public class TshellHelper extends CommandHelper {
         return filterOutput(output, "IPv4 Address.", ":");
     }
 
-    public void grabLogs() throws InterruptedException, IOException, ExecuteException {
-        execPs1(String.format(EXEC_PS1_TEMPLATE, getWorkingDir(), GRABLOGS));
+    public String grabLogs() throws InterruptedException, IOException, ExecuteException {
+        return execPs1(String.format(EXEC_PS1_TEMPLATE, getWorkingDir(), GRABLOGS));
     }
 
     public String execPs1(String... args) throws InterruptedException, IOException,

@@ -43,8 +43,9 @@ public abstract class WorkFlowStage implements Loggable {
                 fireOnLogOutput(logger, Level.INFO, "Setting up...");
                 if (setup()) {
                     fireOnLogOutput(logger, Level.INFO, "Setup done. Executing...");
-                    execute();
-                    fireOnLogOutput(logger, Level.INFO, "Execution done. Cleaning up...");
+                    WorkFlowResult result = execute();
+                    fireOnCompleted(result);
+                    fireOnLogOutput(logger, Level.INFO, "Execution done with "+result.toString()+". Cleaning up...");
                     cleanup();
                     fireOnLogOutput(logger, Level.INFO, "Cleanup done.");
                 } else {
@@ -109,10 +110,10 @@ public abstract class WorkFlowStage implements Loggable {
 
     /**
      * Override this function to execute the detailed job.
+     * @return 
      */
-    protected void execute() {
-        WorkFlowResult result = mExecutor.execute(startWorkerProcess());
-        fireOnCompleted(result);
+    protected WorkFlowResult execute() {
+        return mExecutor.execute(startWorkerProcess());
     }
 
     protected void failfast() {
