@@ -47,7 +47,7 @@
 			<jar destfile="${dist.dir}/@{arch}/DiagnosticLauncherUI.jar">
 				<manifest>
 					<attribute name="Main-Class" value="com.microsoft.projecta.tools.ui.LauncherWindow" />
-					<attribute name="Class-Path" value=". ${libs}/swt.jar ${libs}/swing2swt.jar ${libs}/APKParser.jar" />
+					<attribute name="Class-Path" value=". ${libs}/@{arch}/swt.jar ${libs}/swing2swt.jar ${libs}/APKParser.jar" />
 				</manifest>
 				<fileset dir="${bin.dir}" />
 			</jar>
@@ -55,8 +55,14 @@
 			<mkdir dir="${dist.dir}/@{arch}/${libs}" />
 			<copy todir="${dist.dir}/@{arch}/${libs}">
 				<fileset dir="${libs}">
-					<include name="*.jar"/>
-					<include name="@{arch}/*.jar"/>
+					<include name="*.jar" />
+					<include name="*.bat" />
+				</fileset>
+			</copy>
+			<copy todir="${dist.dir}/@{arch}/${libs}">
+				<fileset dir="${libs}">
+					<include name="@{arch}/*.jar" />
+					<exclude name="@{arch}/*debug*" />
 				</fileset>
 			</copy>
 			<!-- This will require java 1.8 and eclipse builtin ant doesn't work without modification
