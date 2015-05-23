@@ -12,15 +12,12 @@
 		<pathelement location="${libs}/swing2swt.jar" />
 		<pathelement location="${libs}/APKParser.jar" />
 		<!-- Always use win_x64 -->
-		<pathelement location="${libs}_win_x64/swt.jar" />
+		<pathelement location="${libs}/win_x64/swt.jar" />
 		<!-- Debug
-        <pathelement location="${libs}_win_x64/swt-debug.jar"/>
+        <pathelement location="${libs}/win_x64/swt-debug.jar"/>
         -->
 	</path>
 	<property name="launch4j.dir" location="buildTools" />
-	<!-- This will require java 1.8 and eclipse builtin ant doesn't work without modification
-	<taskdef name="launch4j" classname="net.sf.launch4j.ant.Launch4jTask" classpath="${launch4j.dir}/launch4j.jar:${launch4j.dir}/lib/xstream.jar" />
-	-->
 	<target name="init">
 		<mkdir dir="${bin.dir}" />
 		<copy includeemptydirs="false" todir="bin">
@@ -41,49 +38,39 @@
 			<classpath refid="DiagnosticToolkit.classpath" />
 		</javac>
 	</target>
+	<!-- This will require java 1.8 and eclipse builtin ant doesn't work without modification
+	<taskdef name="launch4j" classname="net.sf.launch4j.ant.Launch4jTask" classpath="${launch4j.dir}/launch4j.jar:${launch4j.dir}/lib/xstream.jar" />
+	-->
+	<macrodef name="dist_arch">
+		<attribute name="arch" default="NOT SET" />
+		<sequential>
+			<jar destfile="${dist.dir}/@{arch}/DiagnosticLauncherUI.jar">
+				<manifest>
+					<attribute name="Main-Class" value="com.microsoft.projecta.tools.ui.LauncherWindow" />
+					<attribute name="Class-Path" value=". ${libs}/swt.jar ${libs}/swing2swt.jar ${libs}/APKParser.jar" />
+				</manifest>
+				<fileset dir="${bin.dir}" />
+			</jar>
+			<delete dir="${dist.dir}/@{arch}/${libs}" />
+			<mkdir dir="${dist.dir}/@{arch}/${libs}" />
+			<copy todir="${dist.dir}/@{arch}/${libs}">
+				<fileset dir="${libs}">
+					<include name="*.jar"/>
+					<include name="@{arch}/*.jar"/>
+				</fileset>
+			</copy>
+			<!-- This will require java 1.8 and eclipse builtin ant doesn't work without modification
+			<launch4j configFile="DiagnosticUI.launch4j.xml" outfile="${dist.dir}/DiagnosticLauncherUI.exe" />-->
+			<exec executable="${launch4j.dir}/launch4jc.exe">
+				<arg value="DiagnosticUI.launch4j.@{arch}.xml" />
+			</exec>
+		</sequential>
+	</macrodef>
 	<target depends="build" name="dist_win_x64">
-		<jar destfile="${dist.dir}/win_x64/DiagnosticLauncherUI.jar">
-			<manifest>
-				<attribute name="Main-Class" value="com.microsoft.projecta.tools.ui.LauncherWindow" />
-				<attribute name="Class-Path" value=". ${libs}/swt.jar ${libs}/swing2swt.jar ${libs}/APKParser.jar" />
-			</manifest>
-			<fileset dir="${bin.dir}" />
-		</jar>
-		<delete dir="${dist.dir}/win_x64/${libs}" />
-		<mkdir dir="${dist.dir}/win_x64/${libs}" />
-		<copy todir="${dist.dir}/win_x64/${libs}">
-			<fileset dir="${libs}" />
-		</copy>
-		<copy todir="${dist.dir}/win_x64/${libs}">
-			<fileset dir="${libs}_win_x64" />
-		</copy>
-		<!-- This will require java 1.8 and eclipse builtin ant doesn't work without modification
-		<launch4j configFile="DiagnosticUI.launch4j.xml" outfile="${dist.dir}/DiagnosticLauncherUI.exe" />-->
-		<exec executable="${launch4j.dir}/launch4jc.exe">
-			<arg value="DiagnosticUI.launch4j.win_x64.xml" />
-		</exec>
+		<dist_arch arch="win_x64" />
 	</target>
 	<target depends="build" name="dist_win_x86">
-		<jar destfile="${dist.dir}/win_x86/DiagnosticLauncherUI.jar">
-			<manifest>
-				<attribute name="Main-Class" value="com.microsoft.projecta.tools.ui.LauncherWindow" />
-				<attribute name="Class-Path" value=". ${libs}/swt.jar ${libs}/swing2swt.jar ${libs}/APKParser.jar" />
-			</manifest>
-			<fileset dir="${bin.dir}" />
-		</jar>
-		<delete dir="${dist.dir}/win_x86/${libs}" />
-		<mkdir dir="${dist.dir}/win_x86/${libs}" />
-		<copy todir="${dist.dir}/win_x86/${libs}">
-			<fileset dir="${libs}" />
-		</copy>
-		<copy todir="${dist.dir}/win_x86/${libs}">
-			<fileset dir="${libs}_win_x86" />
-		</copy>
-		<!-- This will require java 1.8 and eclipse builtin ant doesn't work without modification
-		<launch4j configFile="DiagnosticUI.launch4j.xml" outfile="${dist.dir}/DiagnosticLauncherUI.exe" />-->
-		<exec executable="${launch4j.dir}/launch4jc.exe">
-			<arg value="DiagnosticUI.launch4j.win_x86.xml" />
-		</exec>
+		<dist_arch arch="win_x86" />
 	</target>
 	<target depends="dist_win_x86,dist_win_x64" name="dist" />
 </project>
