@@ -32,7 +32,7 @@ public class LaunchProgressDialog extends Dialog {
     private static Logger logger = Logger.getLogger(LaunchProgressDialog.class
             .getSimpleName());
 
-    protected Object result;
+    protected WorkFlowResult mResult;
     protected Shell shlLaunchProgress;
     private ProgressBar progressBarTotal;
     private ProgressBar progressBarStage;
@@ -40,6 +40,7 @@ public class LaunchProgressDialog extends Dialog {
     private LaunchConfig mConfig;
     private FullLaunchManager mLaunchManager;
     private Button mBtnCancel;
+    private WorkFlowStatus mFinalStage;
 
     /**
      * Create the dialog.
@@ -49,6 +50,10 @@ public class LaunchProgressDialog extends Dialog {
      */
     public LaunchProgressDialog(Shell parent, LaunchConfig config) {
         super(parent);
+        mFinalStage = WorkFlowStatus.KILLED_SUCCESS;
+        if (!mConfig.shouldKillApp()) {
+            mFinalStage = WorkFlowStatus.LAUNCH_SUCCESS;
+        }
         mConfig = config;
     }
 
@@ -137,11 +142,12 @@ public class LaunchProgressDialog extends Dialog {
                                 }
                                 if (result == WorkFlowResult.FAILED
                                         || result == WorkFlowResult.CANCELLED
-                                        || stage == WorkFlowStatus.KILLED_SUCCESS) {
+                                        || stage == mFinalStage) {
                                     MessageBox messageBox = null;
                                     int icon = SWT.ICON_INFORMATION;
                                     String title = null;
                                     String msg = null;
+                                    mResult = result;
                                     if (result == WorkFlowResult.FAILED) {
                                         icon = SWT.ICON_ERROR;
                                         title = "Something went wrong!";
@@ -240,6 +246,6 @@ public class LaunchProgressDialog extends Dialog {
                 display.sleep();
             }
         }
-        return result;
+        return mResult;
     }
 }
