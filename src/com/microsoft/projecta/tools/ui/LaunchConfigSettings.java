@@ -60,6 +60,9 @@ public class LaunchConfigSettings extends Dialog {
         mDisplay.asyncExec(new Runnable() {
             @Override
             public void run() {
+                mTextBuildDrop.setText(mConfig.getBuildDropPath());
+                mTextSdkDrop.setText(mConfig.getSdkToolsPath());
+                mTextInjectionScripts.setText(mConfig.getInjectionScriptPath());
                 if (mConfig.hasApkPackageInfo()) {
                     mLabelApkPackageName.setText(mConfig.getApkPackageName());
                     List<String> activities = mConfig.getApkActivities();
@@ -94,6 +97,9 @@ public class LaunchConfigSettings extends Dialog {
         mShell.open();
         mShell.layout();
         mDisplay = getParent().getDisplay();
+        
+        syncConfigToUI();
+        
         while (!mShell.isDisposed()) {
             if (!mDisplay.readAndDispatch()) {
                 mDisplay.sleep();
@@ -183,26 +189,72 @@ public class LaunchConfigSettings extends Dialog {
         grpWorkFlow.setLayout(rl_grpWorkFlow);
 
         Button btnPhoneVmProvisioning = new Button(grpWorkFlow, SWT.CHECK);
+        btnPhoneVmProvisioning.addSelectionListener(new SelectionAdapter() {
+            @Override
+            public void widgetSelected(SelectionEvent e) {
+                mConfig.setShouldProvisionVM(((Button)e.widget).getSelection());
+            }
+        });
         btnPhoneVmProvisioning.setText("Phone VM Provisioning");
         btnPhoneVmProvisioning.setEnabled(false);
 
         Button btnApkInjection = new Button(grpWorkFlow, SWT.CHECK);
+        btnApkInjection.addSelectionListener(new SelectionAdapter() {
+            @Override
+            public void widgetSelected(SelectionEvent e) {
+                mConfig.setShouldInject(((Button)e.widget).getSelection());
+            }
+        });
+        btnApkInjection.setSelection(true);
         btnApkInjection.setText("Apk Injection");
 
         Button btnDeviceConnection = new Button(grpWorkFlow, SWT.CHECK);
+        btnDeviceConnection.setEnabled(false);
+        btnDeviceConnection.addSelectionListener(new SelectionAdapter() {
+            @Override
+            public void widgetSelected(SelectionEvent e) {
+            }
+        });
+        btnDeviceConnection.setSelection(true);
         btnDeviceConnection.setText("Device Connection");
 
         Button btnApkInstallation = new Button(grpWorkFlow, SWT.CHECK);
+        btnApkInstallation.setEnabled(false);
+        btnApkInstallation.addSelectionListener(new SelectionAdapter() {
+            @Override
+            public void widgetSelected(SelectionEvent e) {
+            }
+        });
+        btnApkInstallation.setSelection(true);
         btnApkInstallation.setText("Apk Installation");
 
         Button btnApkLaunch = new Button(grpWorkFlow, SWT.CHECK);
+        btnApkLaunch.setEnabled(false);
+        btnApkLaunch.addSelectionListener(new SelectionAdapter() {
+            @Override
+            public void widgetSelected(SelectionEvent e) {
+            }
+        });
+        btnApkLaunch.setSelection(true);
         btnApkLaunch.setText("Apk Launch");
 
         Button btnTakeScreenshots = new Button(grpWorkFlow, SWT.CHECK);
+        btnTakeScreenshots.addSelectionListener(new SelectionAdapter() {
+            @Override
+            public void widgetSelected(SelectionEvent e) {
+                mConfig.setShouldTakeSnapshot(((Button)e.widget).getSelection());
+            }
+        });
         btnTakeScreenshots.setText("Take screenshots");
         btnTakeScreenshots.setEnabled(false);
 
         Button btnKillAfterLaunched = new Button(grpWorkFlow, SWT.CHECK);
+        btnKillAfterLaunched.addSelectionListener(new SelectionAdapter() {
+            @Override
+            public void widgetSelected(SelectionEvent e) {
+                mConfig.setShouldKillApp(((Button)e.widget).getSelection());
+            }
+        });
         btnKillAfterLaunched.setText("Kill After Launched");
 
         Group grpPaths = new Group(composite_inner, SWT.NONE);

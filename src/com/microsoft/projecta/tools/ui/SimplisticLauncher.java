@@ -40,7 +40,7 @@ public class SimplisticLauncher {
     private Text mTextDeviceIP;
     private Button mBtnGo;
     private LaunchConfig mConfig;
-    
+
     private String mDesiredOutDir;
 
     /**
@@ -54,8 +54,10 @@ public class SimplisticLauncher {
      * @param config the config to set
      */
     public synchronized void setConfig(LaunchConfig config) {
-        mConfig = config;
-        syncConfigToUI();
+        if (config != null) {
+            mConfig = config;
+            syncConfigToUI();
+        }
     }
 
     private void syncConfigToUI() {
@@ -129,7 +131,7 @@ public class SimplisticLauncher {
         display = Display.getDefault();
         createContents();
 
-        //initializeConfig(Branch.Develop);
+        initializeConfig(Branch.Develop);
 
         shlSimplisticLauncher.open();
         shlSimplisticLauncher.layout();
@@ -149,10 +151,10 @@ public class SimplisticLauncher {
         shlSimplisticLauncher.addControlListener(new ControlAdapter() {
             @Override
             public void controlResized(ControlEvent e) {
-                Shell shl = (Shell) e.widget;
-                if (shl.getSize().x > FIXED_SIZE.x || shl.getSize().y > FIXED_SIZE.y) {
-                    shl.setSize(FIXED_SIZE);
-                }
+                // Shell shl = (Shell) e.widget;
+                // if (shl.getSize().x > FIXED_SIZE.x || shl.getSize().y > FIXED_SIZE.y) {
+                // shl.setSize(FIXED_SIZE);
+                // }
             }
         });
         shlSimplisticLauncher.setMinimumSize(FIXED_SIZE);
@@ -251,7 +253,7 @@ public class SimplisticLauncher {
             public void widgetSelected(SelectionEvent e) {
                 LaunchProgressDialog dialog = new LaunchProgressDialog(shlSimplisticLauncher,
                         mConfig);
-                mConfig = (LaunchConfig)dialog.open();
+                dialog.open();
             }
         });
         mBtnGo.setFont(SWTResourceManager.getFont("Segoe UI", 12, SWT.NORMAL));
@@ -266,10 +268,8 @@ public class SimplisticLauncher {
             public void widgetSelected(SelectionEvent e) {
                 LaunchConfigSettings settingsDialog = new LaunchConfigSettings(
                         shlSimplisticLauncher, mConfig);
-                Object result = settingsDialog.open();
-                if (result != null) {
-                    setConfig((LaunchConfig) result);
-                }
+                LaunchConfig result = (LaunchConfig) settingsDialog.open();
+                setConfig(result);
             }
         });
         mntmSettings.setText("Settings");
