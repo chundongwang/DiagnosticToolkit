@@ -26,6 +26,10 @@ public abstract class WorkFlowStage implements Loggable {
     protected String mName;
     private boolean mCompleted;
     protected CommandExecutor mExecutor;
+    
+    // progress, 0-100
+    protected static final int PROGRESS_STARTED = 0;
+    protected static final int PROGRESS_ALL_DONE = 100;
 
     public WorkFlowStage() {
         this(null, null);
@@ -40,10 +44,12 @@ public abstract class WorkFlowStage implements Loggable {
         mWorkerThread = new Thread(new Runnable() {
             @Override
             public void run() {
+                fireOnProgress(PROGRESS_STARTED);
                 fireOnLogOutput(logger, Level.INFO, "Setting up...");
                 if (setup()) {
                     fireOnLogOutput(logger, Level.INFO, "Setup done. Executing...");
                     WorkFlowResult result = execute();
+                    fireOnProgress(PROGRESS_ALL_DONE);
                     fireOnCompleted(result);
                     fireOnLogOutput(logger, Level.INFO, "Execution done with "+result.toString()+". Cleaning up...");
                     cleanup();

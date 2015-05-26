@@ -13,6 +13,7 @@ import java.util.logging.Logger;
 
 import com.microsoft.projecta.tools.common.AndroidManifestInfo;
 import com.microsoft.projecta.tools.common.Utils;
+import com.microsoft.projecta.tools.workflow.WorkFlowStatus;
 
 public final class LaunchConfig {
 
@@ -423,6 +424,33 @@ public final class LaunchConfig {
      */
     public void setUnzippedSdkToolsPath(String unzippedSdkToolsPath) {
         mUnzippedSdkToolsPath = unzippedSdkToolsPath;
+    }
+
+    public boolean should(WorkFlowStatus stage) {
+        switch (stage) {
+            case RAW_APK:
+                // TODO Parse original apk ahead of tthe entire process
+                return false;
+            case PROVISION_VM:
+                return mShouldProvisionVM;
+            case CONNECT_DEVICE:
+                // not optional
+                return true;
+            case INJECT_APK:
+                return mShouldInject;
+            case INSTALL_APP:
+                // not optional
+                return true;
+            case LAUNCH_APP:
+                // not optional
+                return true;
+            case TAKE_SCREENSHOT:
+                return mShouldTakeSnapshot;
+            case KILL_APP:
+                return mShouldKillApp;
+            default:
+                return false;
+        }
     }
 
     /**

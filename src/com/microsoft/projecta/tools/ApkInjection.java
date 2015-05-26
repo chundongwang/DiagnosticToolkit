@@ -20,6 +20,11 @@ public final class ApkInjection extends WorkFlowStage {
     private static Logger logger = Logger.getLogger(ApkInjection.class.getSimpleName());
 
     private LaunchConfig mConfig;
+    
+    // progress, 0-100, and 0/100 are covered by parent class already
+    private static final int PROGRESS_NEED_INJECTION_CHECK = 15;
+    private static final int PROGRESS_RAW_APK_CACHED = 30;
+    private static final int PROGRESS_INJECTION_STARTED = 40;
 
     public ApkInjection(LaunchConfig config) {
         super(logger.getName(), "jython process with injection script");
@@ -36,6 +41,7 @@ public final class ApkInjection extends WorkFlowStage {
             // skip execution as we've injected the exact apk before
             result = WorkFlowResult.SUCCESS;
         } else {
+            fireOnProgress(PROGRESS_INJECTION_STARTED);
             result = super.execute();
 
             if (result == WorkFlowResult.SUCCESS) {
@@ -90,10 +96,12 @@ public final class ApkInjection extends WorkFlowStage {
                             + remoteApkFile + " and " + localOriginApk + ". Will re-inject. ", e);
                 }
             }
+            fireOnProgress(PROGRESS_NEED_INJECTION_CHECK);
             if (needInjection) {
                 // Need injection. clean up the folder and mkdirs afterwards
                 try {
                     mConfig.setInjectedApkPath(null);
+                    fireOnLogOutput("Couldn't find injected app locally. Will do injection.");
                     if (Files.exists(localInjectDropDir)) {
                         Utils.delete(localInjectDropDir);
                     }
@@ -105,6 +113,7 @@ public final class ApkInjection extends WorkFlowStage {
                         mConfig.setOriginApkPath(localOriginApk.toString());
                         result = true;
                     }
+                    fireOnProgress(PROGRESS_RAW_APK_CACHED);
                 } catch (IOException e) {
                     result = false;
                     fireOnLogOutput(logger, Level.SEVERE, "Cannot clean up " + localInjectDropDir
@@ -121,6 +130,7 @@ public final class ApkInjection extends WorkFlowStage {
     @Override
     protected ProcessBuilder startWorkerProcess() {
         // TODO save the log somewhere?
+        fireOnLogOutput("About to start injection.");
         return new ProcessBuilder().command(join(".", "libs", "jython.bat"),
                 join(mConfig.getInjectionScriptPath(), "AutoInjection.py"), "--builddrop",
                 mConfig.getBuildDropPath(), "--output", join(mConfig.getOutdirPath(), "inject"),

@@ -23,6 +23,10 @@ public class ApkMainLauncher extends WorkFlowStage {
     private LaunchConfig mConfig;
     private AdbHelper mAdbHelper;
 
+    // progress, 0-100, and 0/100 are covered by parent class already
+    private static final int PROGRESS_LOGCAT_CLEANED = 15;
+    private static final int PROGRESS_ADB_AM_STARTED = 40;
+
     public ApkMainLauncher(LaunchConfig config) {
         super(logger.getName(), "adb process to launch the activity");
         mConfig = config;
@@ -42,8 +46,8 @@ public class ApkMainLauncher extends WorkFlowStage {
             mAdbHelper.logcat("-d", "-v", "time", "-f",
                     ANDROID_LOG_DIR + String.format(LOGFILE_TEMPLATE, apk_name));
             // pull dump file to local folder
-            mAdbHelper.pull(ANDROID_LOG_DIR + String.format(LOGFILE_TEMPLATE, apk_name),
-                    logPath.resolve(String.format(LOGFILE_TEMPLATE, apk_name)).toString());
+            mAdbHelper.pull(ANDROID_LOG_DIR + String.format(LOGFILE_TEMPLATE, apk_name), logPath
+                    .resolve(String.format(LOGFILE_TEMPLATE, apk_name)).toString());
         } catch (InterruptedException | IOException e) {
             fireOnLogOutput(logger, Level.SEVERE, "Error occured while clearing logcat for "
                     + apk_name, e);
@@ -63,7 +67,8 @@ public class ApkMainLauncher extends WorkFlowStage {
             Thread.sleep(3000);
         } catch (InterruptedException e) {
             // Cancelled by user
-            fireOnLogOutput("Interupted while waiting after executed " + mExecutor.getWorkerProcDesc());
+            fireOnLogOutput("Interupted while waiting after executed "
+                    + mExecutor.getWorkerProcDesc());
         }
         return result;
     }
@@ -87,6 +92,8 @@ public class ApkMainLauncher extends WorkFlowStage {
 
             // clear logcat before launch
             mAdbHelper.logcat("-c");
+            fireOnProgress(PROGRESS_LOGCAT_CLEANED);
+            fireOnLogOutput("Logcat cleared before launching the app.");
         } catch (InterruptedException | IOException e) {
             fireOnLogOutput(logger, Level.SEVERE,
                     "Error occured while parsing AndroidManifest.xml and/or clearing logcat", e);
@@ -106,6 +113,11 @@ public class ApkMainLauncher extends WorkFlowStage {
     protected ProcessBuilder startWorkerProcess() {
         StringBuilder componentName = new StringBuilder();
         componentName.append(mConfig.getActivityToLaunch());
+
+        fireOnLogOutput("About to adb shell am start -a android.intent.action.MAIN -c android.intent.category.LAUNCHER -n "
+                + mConfig.getApkPackageName() + "/" + mConfig.getActivityToLaunch());
+        fireOnProgress(PROGRESS_ADB_AM_STARTED);
+
         return new ProcessBuilder().command(
                 join(mConfig.getUnzippedSdkToolsPath(), "SDK_19.1.0", "platform-tools", "adb.exe"),
                 "shell", "am", "start", "-a", "android.intent.action.MAIN", "-c",

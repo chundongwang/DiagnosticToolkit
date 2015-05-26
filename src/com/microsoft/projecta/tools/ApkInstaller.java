@@ -21,6 +21,11 @@ public final class ApkInstaller extends WorkFlowStage {
     private static String LOGFILE_TEMPLATE = "install-%s.log";
     private LaunchConfig mConfig;
     private AdbHelper mAdbHelper;
+    
+    // progress, 0-100, and 0/100 are covered by parent class already
+    private static final int PROGRESS_LOGCAT_CLEANED = 15;
+    private static final int PROGRESS_PRE_UNINSTALLATION_DONE = 30;
+    private static final int PROGRESS_ADB_INSTALL_STARTED = 40;
 
     public ApkInstaller(LaunchConfig config) {
         super(logger.getName(), "adb process to install apk");
@@ -66,8 +71,12 @@ public final class ApkInstaller extends WorkFlowStage {
             mAdbHelper = AdbHelper.getInstance(mConfig.getUnzippedSdkToolsPath(),
                     mConfig.getOutdirPath());
             mAdbHelper.logcat("-c");
+            fireOnProgress(PROGRESS_LOGCAT_CLEANED);
+            fireOnLogOutput("Logcat cleared before installation.");
             // uninstall first
             mAdbHelper.uninstall(mConfig.getApkPackageName());
+            fireOnProgress(PROGRESS_PRE_UNINSTALLATION_DONE);
+            fireOnLogOutput("Finished uninstalling before installing the app.");
 
         } catch (InterruptedException | IOException e) {
             fireOnLogOutput(logger, Level.SEVERE, "Error occured while clearing logcat", e);
@@ -89,8 +98,10 @@ public final class ApkInstaller extends WorkFlowStage {
             File injectedApkPath = new File(mConfig.getInjectedApkPath());
             if (injectedApkPath.exists() && injectedApkPath.isFile()) {
                 apkPath = injectedApkPath.getAbsolutePath();
+                fireOnLogOutput("Found the injected version of the app and will install it.");
             }
         }
+        fireOnProgress(PROGRESS_ADB_INSTALL_STARTED);
         return new ProcessBuilder().command(mAdbHelper.getExecutablePath(), "install", apkPath).directory(
                 new File(mConfig.getOutdirPath()));
     }

@@ -26,6 +26,11 @@ import com.microsoft.projecta.tools.workflow.WorkFlowStatus;
 public final class DeviceConnection extends WorkFlowStage {
     private static Logger logger = Logger.getLogger(DeviceConnection.class.getSimpleName());
     private static final int UNZIP_BUFFER = 2048;
+    
+    // progress, 0-100, and 0/100 are covered by parent class already
+    private static final int PROGRESS_UNZIPPED_CHECK = 15;
+    private static final int PROGRESS_UNZIPPED_READY = 60;
+    private static final int PROGRESS_WCONNECT_STARTED = 70;
 
     private LaunchConfig mConfig;
     private WconnectHelper mWcHelper;
@@ -69,6 +74,7 @@ public final class DeviceConnection extends WorkFlowStage {
 
     @Override
     protected boolean setup() {
+        fireOnProgress(PROGRESS_STARTED);
         boolean setup_result = false;
         if (!isSdkBuildDrop(mConfig.getSdkToolsPath())) {
             mConfig.setUnzippedSdkToolsPath(mConfig.getSdkToolsPath());
@@ -92,6 +98,7 @@ public final class DeviceConnection extends WorkFlowStage {
                             + zippedSdkVersion + " and " + unzippedSdkVersion + ". Will unzip again. ", e);
                 }
             }
+            fireOnProgress(PROGRESS_UNZIPPED_CHECK);
             if (!setup_result) {
                 // Unzip
                 try {
@@ -101,6 +108,7 @@ public final class DeviceConnection extends WorkFlowStage {
                     unZipAll(zippedSdk.toFile(), unzippedSdkDir.toFile());
                     Files.copy(zippedSdkVersion, unzippedSdkVersion);
                     mConfig.setUnzippedSdkToolsPath(unzippedSdkDir.toAbsolutePath().toString());
+                    fireOnLogOutput("Unzipping sdk tools done.");
                     setup_result = true;
                 } catch (IOException e) {
                     // TODO clean up the unzipped folder?
@@ -111,6 +119,7 @@ public final class DeviceConnection extends WorkFlowStage {
                                     .toString()), e);
                 }
             }
+            fireOnProgress(PROGRESS_UNZIPPED_READY);
         }
         if (setup_result) {
             try {
@@ -133,7 +142,9 @@ public final class DeviceConnection extends WorkFlowStage {
     @Override
     protected ProcessBuilder startWorkerProcess() {
         // TODO save the log somewhere?
-        return mWcHelper.build(mConfig.getDeviceIPAddr(), WconnectHelper.DEFAULT_PIN);
+        fireOnProgress(PROGRESS_WCONNECT_STARTED);
+        fireOnLogOutput("About to start wconnect.");
+        return mWcHelper.build(mConfig.getDeviceIPAddr(), WconnectHelper.DEFAULT_PIN); 
     }
 
     public void unZipAll(File zippedSdk, File unzippedSdkDir) throws ZipException, IOException {

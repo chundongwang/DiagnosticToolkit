@@ -46,7 +46,7 @@
 		<sequential>
 			<jar destfile="${dist.dir}/@{arch}/DiagnosticLauncherUI.jar">
 				<manifest>
-					<attribute name="Main-Class" value="com.microsoft.projecta.tools.ui.LauncherWindow" />
+					<attribute name="Main-Class" value="com.microsoft.projecta.tools.ui.SimplisticLauncher" />
 					<attribute name="Class-Path" value=". ${libs}/@{arch}/swt.jar ${libs}/swing2swt.jar ${libs}/APKParser.jar" />
 				</manifest>
 				<fileset dir="${bin.dir}" />

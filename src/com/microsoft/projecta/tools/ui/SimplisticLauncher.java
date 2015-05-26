@@ -64,27 +64,43 @@ public class SimplisticLauncher {
         display.asyncExec(new Runnable() {
             @Override
             public void run() {
-                if (mConfig.hasDeviceIPAddr()
-                        && !mTextDeviceIP.getText().equals(mConfig.getDeviceIPAddr())) {
-                    mTextDeviceIP.setText(mConfig.getDeviceIPAddr());
+                if (mConfig != null) {
+                    if (mConfig.hasDeviceIPAddr()
+                            && !mTextDeviceIP.getText().equals(mConfig.getDeviceIPAddr())) {
+                        mTextDeviceIP.setText(mConfig.getDeviceIPAddr());
+                    }
+                    if (mConfig.hasOriginApkPath()
+                            && !mTextRawApk.getText().equals(mConfig.getOriginApkPath())) {
+                        mTextRawApk.setText(mConfig.getOriginApkPath());
+                    }
+                    if (mConfig.hasOutdirPath()
+                            && !mTextOutDir.getText().equals(mConfig.getOutdirPath())) {
+                        mTextOutDir.setText(mConfig.getOutdirPath());
+                    }
+                    mBtnGo.setEnabled(mConfig.validate());
                 }
-                if (mConfig.hasOriginApkPath()
-                        && !mTextRawApk.getText().equals(mConfig.getOriginApkPath())) {
-                    mTextRawApk.setText(mConfig.getOriginApkPath());
-                }
-                if (mConfig.hasOutdirPath()
-                        && !mTextOutDir.getText().equals(mConfig.getOutdirPath())) {
-                    mTextOutDir.setText(mConfig.getOutdirPath());
-                }
-                mBtnGo.setEnabled(mConfig.validate());
             }
         });
     }
 
-    private void initializeConfig(Branch branch) {
+    private void initializeConfig(final Branch branch) {
         // build launch config from default of the specified branch
-        setConfig(new LaunchConfig.Builder(branch).addOutDir(System.getProperty("user.dir"))
-                .addDeviceIP(retrieveDeviceIPAddress()).build());
+        Thread configThread = new Thread(new Runnable() {
+            @Override
+            public void run() {
+                setConfig(new LaunchConfig.Builder(branch)
+                        .addOutDir(System.getProperty("user.dir"))
+                        .addDeviceIP(retrieveDeviceIPAddress()).build());
+            }
+        });
+        configThread.start();
+        
+        // With splash screen, we should wait for configuration done.
+        try {
+            configThread.join();
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
     }
 
     private String retrieveDeviceIPAddress() {
@@ -249,6 +265,7 @@ public class SimplisticLauncher {
         composite.setLayoutData(new GridData(SWT.FILL, SWT.FILL, false, true, 2, 1));
 
         mBtnGo = new Button(composite, SWT.NONE);
+        mBtnGo.setEnabled(false);
         mBtnGo.addSelectionListener(new SelectionAdapter() {
             @Override
             public void widgetSelected(SelectionEvent e) {
