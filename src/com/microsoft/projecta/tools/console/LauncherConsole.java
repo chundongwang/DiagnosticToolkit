@@ -154,7 +154,7 @@ public class LauncherConsole implements WorkFlowProgressListener {
             mCompleted = true;
         }
         if (result == WorkFlowResult.SUCCESS) {
-            if (stage == WorkFlowStatus.KILLED_SUCCESS) {
+            if (stage == WorkFlowStatus.KILL_APP) {
                 mCompleted = true;
             } else {
                 List<WorkFlowStage> nextStages = sender.getNextSteps();

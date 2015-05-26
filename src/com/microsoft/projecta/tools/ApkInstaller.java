@@ -54,7 +54,7 @@ public final class ApkInstaller extends WorkFlowStage {
 
     @Override
     public WorkFlowStatus getStatus() {
-        return WorkFlowStatus.INSTALLED_SUCCESS;
+        return WorkFlowStatus.INSTALL_APP;
     }
 
     /**

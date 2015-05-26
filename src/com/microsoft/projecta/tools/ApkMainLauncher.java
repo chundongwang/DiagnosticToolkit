@@ -70,7 +70,7 @@ public class ApkMainLauncher extends WorkFlowStage {
 
     @Override
     public WorkFlowStatus getStatus() {
-        return WorkFlowStatus.LAUNCH_SUCCESS;
+        return WorkFlowStatus.LAUNCH_APP;
     }
 
     /**

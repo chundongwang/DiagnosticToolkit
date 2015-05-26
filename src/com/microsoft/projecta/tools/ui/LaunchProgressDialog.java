@@ -27,6 +27,12 @@ import com.microsoft.projecta.tools.workflow.WorkFlowProgressListener;
 import com.microsoft.projecta.tools.workflow.WorkFlowResult;
 import com.microsoft.projecta.tools.workflow.WorkFlowStage;
 import com.microsoft.projecta.tools.workflow.WorkFlowStatus;
+import org.eclipse.swt.layout.FillLayout;
+import org.eclipse.wb.swt.SWTResourceManager;
+import org.eclipse.swt.widgets.Canvas;
+import org.eclipse.swt.layout.RowLayout;
+import org.eclipse.swt.custom.ScrolledComposite;
+import org.eclipse.swt.layout.RowData;
 
 public class LaunchProgressDialog extends Dialog {
     private static Logger logger = Logger.getLogger(LaunchProgressDialog.class
@@ -34,13 +40,20 @@ public class LaunchProgressDialog extends Dialog {
 
     protected WorkFlowResult mResult;
     protected Shell shlLaunchProgress;
-    private ProgressBar progressBarTotal;
     private ProgressBar progressBarStage;
     private Text textOutput;
     private LaunchConfig mConfig;
     private FullLaunchManager mLaunchManager;
     private Button mBtnCancel;
     private WorkFlowStatus mFinalStage;
+    private Label mImageLblPhoneVM;
+    private Label mImageLblApkInjection;
+    private Label mImageLblDeviceConn;
+    private Label mImageLblAppInstall;
+    private Label mImageLblAppLaunch;
+    private Label mImageLblScreenShot;
+    private Label mImageLblKillApp;
+
 
     /**
      * Create the dialog.
@@ -50,9 +63,9 @@ public class LaunchProgressDialog extends Dialog {
      */
     public LaunchProgressDialog(Shell parent, LaunchConfig config) {
         super(parent);
-        mFinalStage = WorkFlowStatus.KILLED_SUCCESS;
+        mFinalStage = WorkFlowStatus.KILL_APP;
         if (!mConfig.shouldKillApp()) {
-            mFinalStage = WorkFlowStatus.LAUNCH_SUCCESS;
+            mFinalStage = WorkFlowStatus.LAUNCH_APP;
         }
         mConfig = config;
     }
@@ -66,21 +79,78 @@ public class LaunchProgressDialog extends Dialog {
         shlLaunchProgress.setSize(485, 298);
         shlLaunchProgress.setText("Launch Progress...");
         shlLaunchProgress.setLayout(new GridLayout(2, false));
-
-        Label lblTotalProgress = new Label(shlLaunchProgress, SWT.NONE);
-        lblTotalProgress.setLayoutData(new GridData(SWT.FILL, SWT.FILL, false,
-                false, 1, 1));
-        lblTotalProgress.setText("Total Progress");
-
-        progressBarTotal = new ProgressBar(shlLaunchProgress, SWT.NONE);
-        progressBarTotal.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true,
-                false, 1, 1));
-        progressBarTotal.setMaximum(WorkFlowStatus.values().length);
+        
+        Composite composite = new Composite(shlLaunchProgress, SWT.NONE);
+        composite.setLayout(new GridLayout(1, false));
+        composite.setLayoutData(new GridData(SWT.CENTER, SWT.CENTER, false, false, 2, 1));
+        
+        Composite composite_StageImages = new Composite(composite, SWT.NONE);
+        composite_StageImages.setLayout(new RowLayout(SWT.HORIZONTAL));
+        
+        mImageLblPhoneVM = new Label(composite_StageImages, SWT.NONE);
+        mImageLblPhoneVM.setImage(SWTResourceManager.getImage(LaunchProgressDialog.class, "/com/microsoft/projecta/tools/ui/res/skipped.png"));
+        
+        mImageLblApkInjection = new Label(composite_StageImages, SWT.NONE);
+        mImageLblApkInjection.setImage(SWTResourceManager.getImage(LaunchProgressDialog.class, "/com/microsoft/projecta/tools/ui/res/running.png"));
+        
+        mImageLblDeviceConn = new Label(composite_StageImages, SWT.NONE);
+        mImageLblDeviceConn.setImage(SWTResourceManager.getImage(LaunchProgressDialog.class, "/com/microsoft/projecta/tools/ui/res/pending.png"));
+        
+        mImageLblAppInstall = new Label(composite_StageImages, SWT.NONE);
+        mImageLblAppInstall.setImage(SWTResourceManager.getImage(LaunchProgressDialog.class, "/com/microsoft/projecta/tools/ui/res/pending.png"));
+        
+        mImageLblAppLaunch = new Label(composite_StageImages, SWT.NONE);
+        mImageLblAppLaunch.setImage(SWTResourceManager.getImage(LaunchProgressDialog.class, "/com/microsoft/projecta/tools/ui/res/pending.png"));
+        
+        mImageLblScreenShot = new Label(composite_StageImages, SWT.NONE);
+        mImageLblScreenShot.setImage(SWTResourceManager.getImage(LaunchProgressDialog.class, "/com/microsoft/projecta/tools/ui/res/pending.png"));
+        
+        mImageLblKillApp = new Label(composite_StageImages, SWT.NONE);
+        mImageLblKillApp.setImage(SWTResourceManager.getImage(LaunchProgressDialog.class, "/com/microsoft/projecta/tools/ui/res/pending.png"));
+        
+        Composite composite_Stages = new Composite(composite, SWT.NONE);
+        composite_Stages.setLayoutData(new GridData(SWT.CENTER, SWT.CENTER, false, false, 1, 1));
+        composite_Stages.setLayout(new RowLayout(SWT.HORIZONTAL));
+        
+        Label lblPhoneVM = new Label(composite_Stages, SWT.NONE);
+        lblPhoneVM.setLayoutData(new RowData(64, 64));
+        lblPhoneVM.setAlignment(SWT.CENTER);
+        lblPhoneVM.setText("Phone VM");
+        
+        Label lblApkInjection = new Label(composite_Stages, SWT.NONE);
+        lblApkInjection.setLayoutData(new RowData(64, 64));
+        lblApkInjection.setText("Apk\r\nInjection");
+        lblApkInjection.setAlignment(SWT.CENTER);
+        
+        Label lblDeviceConn = new Label(composite_Stages, SWT.NONE);
+        lblDeviceConn.setAlignment(SWT.CENTER);
+        lblDeviceConn.setLayoutData(new RowData(64, 64));
+        lblDeviceConn.setText("Device\r\nConn");
+        
+        Label lblAppInstall = new Label(composite_Stages, SWT.NONE);
+        lblAppInstall.setLayoutData(new RowData(64, 64));
+        lblAppInstall.setText("App\r\nInstall");
+        lblAppInstall.setAlignment(SWT.CENTER);
+        
+        Label lblAppLaunch = new Label(composite_Stages, SWT.NONE);
+        lblAppLaunch.setLayoutData(new RowData(64, 64));
+        lblAppLaunch.setText("App\r\nLaunch");
+        lblAppLaunch.setAlignment(SWT.CENTER);
+        
+        Label lblScreenShot = new Label(composite_Stages, SWT.NONE);
+        lblScreenShot.setLayoutData(new RowData(64, 64));
+        lblScreenShot.setText("Screen\r\nShot");
+        lblScreenShot.setAlignment(SWT.CENTER);
+        
+        Label lblKillApp = new Label(composite_Stages, SWT.NONE);
+        lblKillApp.setLayoutData(new RowData(64, 64));
+        lblKillApp.setText("Kill\r\nApp");
+        lblKillApp.setAlignment(SWT.CENTER);
 
         Label lblStepProgress = new Label(shlLaunchProgress, SWT.NONE);
         lblStepProgress.setLayoutData(new GridData(SWT.FILL, SWT.FILL, false,
                 false, 1, 1));
-        lblStepProgress.setText("Step Progress");
+        lblStepProgress.setText("Progress:");
 
         progressBarStage = new ProgressBar(shlLaunchProgress, SWT.NONE);
         progressBarStage.setLayoutData(new GridData(SWT.FILL, SWT.FILL, false,
@@ -96,14 +166,14 @@ public class LaunchProgressDialog extends Dialog {
         textOutput.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, true,
                 1, 1));
 
-        Composite composite = new Composite(shlLaunchProgress, SWT.NONE);
-        composite.setLayout(new FlowLayout(FlowLayout.RIGHT, 5, 5));
-        GridData gd_composite = new GridData(SWT.FILL, SWT.FILL, true, false,
+        Composite composite_BottomButtons = new Composite(shlLaunchProgress, SWT.NONE);
+        composite_BottomButtons.setLayout(new FlowLayout(FlowLayout.RIGHT, 5, 5));
+        GridData gd_composite_BottomButtons = new GridData(SWT.FILL, SWT.FILL, true, false,
                 2, 1);
-        gd_composite.heightHint = 34;
-        composite.setLayoutData(gd_composite);
+        gd_composite_BottomButtons.heightHint = 34;
+        composite_BottomButtons.setLayoutData(gd_composite_BottomButtons);
 
-        mBtnCancel = new Button(composite, SWT.NONE);
+        mBtnCancel = new Button(composite_BottomButtons, SWT.NONE);
         mBtnCancel.addMouseListener(new MouseAdapter() {
             @Override
             public void mouseUp(MouseEvent e) {
@@ -131,15 +201,16 @@ public class LaunchProgressDialog extends Dialog {
                                 stage.toString() + " completed w/ " + result.toString());
                         getParent().getDisplay().asyncExec(new Runnable() {
                             @Override
-                            public void run() {
-                                progressBarTotal.setMaximum(mLaunchManager
-                                        .getTotalStages());
-                                if (progressBarTotal.getSelection() <= stage
-                                        .ordinal()) {
-                                    progressBarTotal.setSelection(stage
-                                            .ordinal());
-                                    progressBarStage.setSelection(100);
-                                }
+                            public void run() {                                
+                                // TODO use image label to show progress of stages
+//                                progressBarTotal.setMaximum(mLaunchManager
+//                                        .getTotalStages());
+//                                if (progressBarTotal.getSelection() <= stage
+//                                        .ordinal()) {
+//                                    progressBarTotal.setSelection(stage
+//                                            .ordinal());
+//                                    progressBarStage.setSelection(100);
+//                                }
                                 if (result == WorkFlowResult.FAILED
                                         || result == WorkFlowResult.CANCELLED
                                         || stage == mFinalStage) {
@@ -160,7 +231,7 @@ public class LaunchProgressDialog extends Dialog {
                                         msg = String.format(
                                                 "%s got cancelled by user.",
                                                 sender.getName());
-                                    } else if (stage == WorkFlowStatus.KILLED_SUCCESS) {
+                                    } else if (stage == WorkFlowStatus.KILL_APP) {
                                         icon = SWT.ICON_INFORMATION;
                                         title = "Apk Launch Process Succeeded!";
                                         msg = title;
@@ -209,19 +280,21 @@ public class LaunchProgressDialog extends Dialog {
                         getParent().getDisplay().asyncExec(new Runnable() {
                             @Override
                             public void run() {
-                                progressBarTotal.setMaximum(mLaunchManager
-                                        .getTotalStages());
-                                if (progressBarTotal.getSelection() <= stage
-                                        .ordinal()) {
-                                    boolean shouldUpdate = progressBarTotal
-                                            .getSelection() != stage.ordinal();
-                                    progressBarTotal.setSelection(stage
-                                            .ordinal());
-                                    if (progress > progressBarStage
-                                            .getSelection() || shouldUpdate) {
-                                        progressBarStage.setSelection(progress);
-                                    }
-                                }
+                                // TODO use image label to show progress of stages
+                                
+//                                progressBarTotal.setMaximum(mLaunchManager
+//                                        .getTotalStages());
+//                                if (progressBarTotal.getSelection() <= stage
+//                                        .ordinal()) {
+//                                    boolean shouldUpdate = progressBarTotal
+//                                            .getSelection() != stage.ordinal();
+//                                    progressBarTotal.setSelection(stage
+//                                            .ordinal());
+//                                    if (progress > progressBarStage
+//                                            .getSelection() || shouldUpdate) {
+//                                        progressBarStage.setSelection(progress);
+//                                    }
+//                                }
                             }
                         });
                     }

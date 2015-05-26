@@ -54,7 +54,7 @@ public final class ApkInjection extends WorkFlowStage {
 
     @Override
     public WorkFlowStatus getStatus() {
-        return WorkFlowStatus.INJECTED_GPINTEROP;
+        return WorkFlowStatus.INJECT_APK;
     }
 
     @Override

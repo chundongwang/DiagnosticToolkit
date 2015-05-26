@@ -19,7 +19,7 @@ public class ApkKiller extends WorkFlowStage {
 
     @Override
     public WorkFlowStatus getStatus() {
-        return WorkFlowStatus.KILLED_SUCCESS;
+        return WorkFlowStatus.KILL_APP;
     }
 
     /**

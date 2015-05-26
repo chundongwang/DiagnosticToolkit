@@ -148,6 +148,7 @@ public class SimplisticLauncher {
      */
     protected void createContents() {
         shlSimplisticLauncher = new Shell();
+        shlSimplisticLauncher.setImage(null);
         shlSimplisticLauncher.addControlListener(new ControlAdapter() {
             @Override
             public void controlResized(ControlEvent e) {

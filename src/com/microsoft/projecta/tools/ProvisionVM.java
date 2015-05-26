@@ -20,7 +20,7 @@ public class ProvisionVM extends WorkFlowStage {
 
     @Override
     public WorkFlowStatus getStatus() {
-        return WorkFlowStatus.PROVISIONED_VM;
+        return WorkFlowStatus.PROVISION_VM;
     }
 
     /**

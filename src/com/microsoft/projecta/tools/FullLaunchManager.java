@@ -32,8 +32,8 @@ public final class FullLaunchManager implements WorkFlowProgressListener {
      * @param config LaunchConfig of this run
      * @return true if both k is subclass of WorkFlowStage and config allows it to run.
      */
-    private static boolean shouldRun(Class<?> k, LaunchConfig config) {
-        if (WorkFlowStage.class.isAssignableFrom(k)) {
+    private static boolean shouldRun(Class<? extends WorkFlowStage> k, LaunchConfig config) {
+        if (k != null && WorkFlowStage.class.isAssignableFrom(k)) {
             if (k == ProvisionVM.class) {
                 return config.shouldProvisionVM();
             } else if (k == ApkInjection.class) {
@@ -86,17 +86,19 @@ public final class FullLaunchManager implements WorkFlowProgressListener {
         WorkFlowStage stage = null;
 
         // 1. Provision VM
-        // 2. Inject GP-Interop
-        // 3. Device connection
+        // 2. Device connection
+        // 3. Inject GP-Interop
         // 4. App installation (logcat)
         // 5. App launch (logcat, snapshot)
         // 6. Kill the app
-        Class[] steps = {
-                ProvisionVM.class, ApkInjection.class, DeviceConnection.class, ApkInstaller.class,
-                ApkMainLauncher.class, ApkKiller.class
-        };
+        WorkFlowStatus[] steps = WorkFlowStatus.values();
+//        Class[] steps = {
+//                ProvisionVM.class, ApkInjection.class, DeviceConnection.class, ApkInstaller.class,
+//                ApkMainLauncher.class, ApkKiller.class
+//        };
         mTotalStages = 0;
-        for (Class<?> k : steps) {
+        for (WorkFlowStatus step : steps) {
+            Class<? extends WorkFlowStage> k = step.getKlazz();
             if (shouldRun(k, mConfig)) {
                 Constructor ctor;
                 try {

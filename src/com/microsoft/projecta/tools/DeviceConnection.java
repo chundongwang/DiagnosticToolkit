@@ -49,7 +49,7 @@ public final class DeviceConnection extends WorkFlowStage {
 
     @Override
     public WorkFlowStatus getStatus() {
-        return WorkFlowStatus.DEVICE_CONNECTED;
+        return WorkFlowStatus.CONNECT_DEVICE;
     }
 
     private boolean isSdkBuildDrop(String sdkToolsPath) {
