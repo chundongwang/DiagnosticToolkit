@@ -83,17 +83,17 @@ public class ApkMainLauncher extends WorkFlowStage {
      */
     @Override
     protected boolean setup() {
-        boolean result = false;
         try {
             // even if logcat -c failed, we should still probably keep going
             mAdbHelper = AdbHelper.getInstance(mConfig.getUnzippedSdkToolsPath(),
                     mConfig.getOutdirPath());
-            result = true;
 
-            // clear logcat before launch
-            mAdbHelper.logcat("-c");
-            fireOnProgress(PROGRESS_LOGCAT_CLEANED);
-            fireOnLogOutput("Logcat cleared before launching the app.");
+            if (mAdbHelper != null) {
+                // clear logcat before launch
+                mAdbHelper.logcat("-c");
+                fireOnProgress(PROGRESS_LOGCAT_CLEANED);
+                fireOnLogOutput("Logcat cleared before launching the app.");
+            }
         } catch (InterruptedException | IOException e) {
             fireOnLogOutput(logger, Level.SEVERE,
                     "Error occured while parsing AndroidManifest.xml and/or clearing logcat", e);
@@ -101,7 +101,8 @@ public class ApkMainLauncher extends WorkFlowStage {
             fireOnLogOutput(logger, Level.SEVERE,
                     "Error occured while running adb to clear logcat ", e);
         }
-        return result;
+        // even if logcat -c failed, we should still probably keep going
+        return mAdbHelper != null;
     }
 
     /**
@@ -119,11 +120,10 @@ public class ApkMainLauncher extends WorkFlowStage {
         fireOnProgress(PROGRESS_ADB_AM_STARTED);
 
         return new ProcessBuilder().command(
-                join(mConfig.getUnzippedSdkToolsPath(), "SDK_19.1.0", "platform-tools", "adb.exe"),
+                mAdbHelper.getAdbPath().toString(),
                 "shell", "am", "start", "-a", "android.intent.action.MAIN", "-c",
                 "android.intent.category.LAUNCHER", "-n",
                 mConfig.getApkPackageName() + "/" + mConfig.getActivityToLaunch()).directory(
                 new File(mConfig.getOutdirPath()));
     }
-
 }
