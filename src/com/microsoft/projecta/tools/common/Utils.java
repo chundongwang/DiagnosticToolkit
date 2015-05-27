@@ -75,7 +75,7 @@ public class Utils {
         openApkFileDialog.setText(title);
         openApkFileDialog.setFilterPath(default_value);
         String[] filterExt = {
-            "*.apk"
+                "*.apk"
         };
         openApkFileDialog.setFilterExtensions(filterExt);
         return openApkFileDialog.open();
@@ -191,11 +191,18 @@ public class Utils {
 
     private static final int UNZIP_BUFFER = 2048;
 
-    public static void unZipAll(File zippedSdk, File unzippedSdkDir, Loggable logger) throws ZipException, IOException {
-        unZipAll(zippedSdk, unzippedSdkDir, logger, false);
+    public static void unZipAll(File zippedSdk, File unzippedSdkDir, Loggable logger)
+            throws ZipException, IOException {
+        unZipAll(zippedSdk, unzippedSdkDir, logger, null, false);
     }
 
-    public static void unZipAll(File source, File destination, Loggable logger, boolean recursively) throws ZipException,
+    public static void unZipAll(File zippedSdk, File unzippedSdkDir, Loggable logger,
+            UnzipFilter filter) throws ZipException, IOException {
+        unZipAll(zippedSdk, unzippedSdkDir, logger, filter, false);
+    }
+
+    public static void unZipAll(File source, File destination, Loggable logger, UnzipFilter filter,
+            boolean recursively) throws ZipException,
             IOException {
         logger.onLogOutput(Logger.getGlobal(), Level.INFO, "Unzipping " + source.getName(), null);
         ZipFile zip = new ZipFile(source);
@@ -215,36 +222,41 @@ public class Utils {
             // create the parent directory structure if needed
             destinationParent.mkdirs();
 
-            if (!entry.isDirectory()) {
-                BufferedInputStream is = new BufferedInputStream(zip.getInputStream(entry));
-                int currentByte;
-                // establish buffer for writing file
-                byte data[] = new byte[UNZIP_BUFFER];
+            if (filter != null && filter.shouldUnzip(entry)) {
+                if (!entry.isDirectory()) {
+                    BufferedInputStream is = new BufferedInputStream(zip.getInputStream(entry));
+                    int currentByte;
+                    // establish buffer for writing file
+                    byte data[] = new byte[UNZIP_BUFFER];
 
-                // write the current file to disk
-                FileOutputStream fos = new FileOutputStream(destFile);
-                BufferedOutputStream dest = new BufferedOutputStream(fos, UNZIP_BUFFER);
+                    // write the current file to disk
+                    FileOutputStream fos = new FileOutputStream(destFile);
+                    BufferedOutputStream dest = new BufferedOutputStream(fos, UNZIP_BUFFER);
 
-                // read and write until last byte is encountered
-                while ((currentByte = is.read(data, 0, UNZIP_BUFFER)) != -1) {
-                    dest.write(data, 0, currentByte);
+                    // read and write until last byte is encountered
+                    while ((currentByte = is.read(data, 0, UNZIP_BUFFER)) != -1) {
+                        dest.write(data, 0, currentByte);
+                    }
+                    logger.onLogOutput(Logger.getGlobal(), Level.INFO,
+                            "Unzipped " + entry.getName(), null);
+                    dest.close();
+                    fos.close();
+                    is.close();
+                } else {
+                    // Create directory
+                    destFile.mkdirs();
+                    logger.onLogOutput(Logger.getGlobal(), Level.INFO,
+                            "Creating " + destFile.getAbsolutePath(), null);
                 }
-                logger.onLogOutput(Logger.getGlobal(), Level.INFO, "Unzipped " + entry.getName(), null);
-                dest.close();
-                fos.close();
-                is.close();
-            } else {
-                // Create directory
-                destFile.mkdirs();
-                logger.onLogOutput(Logger.getGlobal(), Level.INFO, "Creating " + destFile.getAbsolutePath(), null);
-            }
 
-            if (recursively && currentEntry.endsWith(".zip")) {
-                // found a zip file, try to unzip it as well
-                unZipAll(destFile, destinationParent, logger);
-                // delete the unzipped file
-                if (!destFile.delete()) {
-                    logger.onLogOutput(Logger.getGlobal(), Level.WARNING, "Cannot delete " + destFile.getAbsolutePath(), null);
+                if (recursively && currentEntry.endsWith(".zip")) {
+                    // found a zip file, try to unzip it as well
+                    unZipAll(destFile, destinationParent, logger);
+                    // delete the unzipped file
+                    if (!destFile.delete()) {
+                        logger.onLogOutput(Logger.getGlobal(), Level.WARNING, "Cannot delete "
+                                + destFile.getAbsolutePath(), null);
+                    }
                 }
             }
         }

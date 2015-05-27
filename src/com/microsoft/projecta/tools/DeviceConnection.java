@@ -17,6 +17,7 @@ import java.util.zip.ZipException;
 import java.util.zip.ZipFile;
 
 import com.microsoft.projecta.tools.common.Loggable;
+import com.microsoft.projecta.tools.common.UnzipFilter;
 import com.microsoft.projecta.tools.common.Utils;
 import com.microsoft.projecta.tools.common.WconnectHelper;
 import com.microsoft.projecta.tools.config.LaunchConfig;
@@ -112,6 +113,17 @@ public final class DeviceConnection extends WorkFlowStage {
                         public void onLogOutput(Logger logger, Level level, String message,
                                 Throwable e) {
                             fireOnLogOutput(logger, level, message, e);
+                        }
+                    }, new UnzipFilter() {
+                        @Override
+                        public boolean shouldUnzip(ZipEntry entry) {
+                            String currentEntryName = entry.getName();
+                            // Only unzip platform-tools for adb and tools for wconnect
+                            if (currentEntryName.startsWith("tools")
+                                    || currentEntryName.startsWith("SDK_19.1.0/platform-tools")) {
+                                return true;
+                            }
+                            return false;
                         }
                     });
                     Files.copy(zippedSdkVersion, unzippedSdkVersion);
