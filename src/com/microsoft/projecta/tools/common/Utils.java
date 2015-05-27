@@ -15,6 +15,7 @@ import java.nio.file.SimpleFileVisitor;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.Enumeration;
 import java.util.logging.Level;
+import java.util.logging.Logger;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipException;
 import java.util.zip.ZipFile;
@@ -121,14 +122,6 @@ public class Utils {
                                     + e.getMessage());
                             e.printStackTrace();
                         }
-
-                        // if (Runtime.getRuntime().exec("cmd /C RD /S /Q \"" + target + "\"")
-                        // .waitFor() != 0) {
-                        // deleted = false;
-                        // System.err.println("Non-zero exit of RD while deleting " + target);
-                        // } else {
-                        // deleted = true;
-                        // }
                     }
                     break;
                 case LINUX:
@@ -196,14 +189,15 @@ public class Utils {
         }
     }
 
+    private static final int UNZIP_BUFFER = 2048;
 
-    public static void unZipAll(File zippedSdk, File unzippedSdkDir) throws ZipException, IOException {
-        unZipAll(zippedSdk, unzippedSdkDir, false);
+    public static void unZipAll(File zippedSdk, File unzippedSdkDir, Loggable logger) throws ZipException, IOException {
+        unZipAll(zippedSdk, unzippedSdkDir, logger, false);
     }
 
-    public static void unZipAll(File source, File destination, boolean recursively) throws ZipException,
+    public static void unZipAll(File source, File destination, Loggable logger, boolean recursively) throws ZipException,
             IOException {
-        fireOnLogOutput("Unzipping " + source.getName());
+        logger.onLogOutput(Logger.getGlobal(), Level.INFO, "Unzipping " + source.getName(), null);
         ZipFile zip = new ZipFile(source);
 
         destination.getParentFile().mkdirs();
@@ -235,22 +229,22 @@ public class Utils {
                 while ((currentByte = is.read(data, 0, UNZIP_BUFFER)) != -1) {
                     dest.write(data, 0, currentByte);
                 }
-                fireOnLogOutput("Unzipped " + entry.getName());
+                logger.onLogOutput(Logger.getGlobal(), Level.INFO, "Unzipped " + entry.getName(), null);
                 dest.close();
                 fos.close();
                 is.close();
             } else {
                 // Create directory
                 destFile.mkdirs();
-                fireOnLogOutput("Creating " + destFile.getAbsolutePath());
+                logger.onLogOutput(Logger.getGlobal(), Level.INFO, "Creating " + destFile.getAbsolutePath(), null);
             }
 
             if (recursively && currentEntry.endsWith(".zip")) {
                 // found a zip file, try to unzip it as well
-                unZipAll(destFile, destinationParent);
+                unZipAll(destFile, destinationParent, logger);
                 // delete the unzipped file
                 if (!destFile.delete()) {
-                    fireOnLogOutput(logger, Level.WARNING, "Creating " + destFile.getAbsolutePath());
+                    logger.onLogOutput(Logger.getGlobal(), Level.WARNING, "Cannot delete " + destFile.getAbsolutePath(), null);
                 }
             }
         }
