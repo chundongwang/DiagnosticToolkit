@@ -112,18 +112,27 @@ public class ApkMainLauncher extends WorkFlowStage {
      */
     @Override
     protected ProcessBuilder startWorkerProcess() {
-        StringBuilder componentName = new StringBuilder();
-        componentName.append(mConfig.getActivityToLaunch());
+        if (mConfig.getActivityToLaunch().equals(mConfig.getApkMainActivity())) {
+            fireOnLogOutput("About to adb shell am start -a android.intent.action.MAIN -c android.intent.category.LAUNCHER -n "
+                    + mConfig.getApkPackageName() + "/" + mConfig.getActivityToLaunch());
+            fireOnProgress(PROGRESS_ADB_AM_STARTED);
 
-        fireOnLogOutput("About to adb shell am start -a android.intent.action.MAIN -c android.intent.category.LAUNCHER -n "
-                + mConfig.getApkPackageName() + "/" + mConfig.getActivityToLaunch());
-        fireOnProgress(PROGRESS_ADB_AM_STARTED);
+            return new ProcessBuilder().command(
+                    mAdbHelper.getAdbPath().toString(),
+                    "shell", "am", "start", "-a", "android.intent.action.MAIN", "-c",
+                    "android.intent.category.LAUNCHER", "-n",
+                    mConfig.getApkPackageName() + "/" + mConfig.getActivityToLaunch()).directory(
+                    new File(mConfig.getOutdirPath()));
+        } else {
+            fireOnLogOutput("About to adb shell am start -n "
+                    + mConfig.getApkPackageName() + "/" + mConfig.getActivityToLaunch());
+            fireOnProgress(PROGRESS_ADB_AM_STARTED);
 
-        return new ProcessBuilder().command(
-                mAdbHelper.getAdbPath().toString(),
-                "shell", "am", "start", "-a", "android.intent.action.MAIN", "-c",
-                "android.intent.category.LAUNCHER", "-n",
-                mConfig.getApkPackageName() + "/" + mConfig.getActivityToLaunch()).directory(
-                new File(mConfig.getOutdirPath()));
+            return new ProcessBuilder().command(
+                    mAdbHelper.getAdbPath().toString(),
+                    "shell", "am", "start", "-n",
+                    mConfig.getApkPackageName() + "/" + mConfig.getActivityToLaunch()).directory(
+                    new File(mConfig.getOutdirPath()));
+        }
     }
 }
