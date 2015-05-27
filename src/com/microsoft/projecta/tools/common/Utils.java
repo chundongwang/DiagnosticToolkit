@@ -3,13 +3,22 @@ package com.microsoft.projecta.tools.common;
 
 import java.awt.Dimension;
 import java.awt.Toolkit;
+import java.io.BufferedInputStream;
+import java.io.BufferedOutputStream;
 import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.nio.file.FileVisitResult;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.SimpleFileVisitor;
 import java.nio.file.attribute.BasicFileAttributes;
+import java.util.Enumeration;
+import java.util.logging.Level;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipException;
+import java.util.zip.ZipFile;
+
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.widgets.DirectoryDialog;
 import org.eclipse.swt.widgets.FileDialog;
@@ -187,4 +196,64 @@ public class Utils {
         }
     }
 
+
+    public static void unZipAll(File zippedSdk, File unzippedSdkDir) throws ZipException, IOException {
+        unZipAll(zippedSdk, unzippedSdkDir, false);
+    }
+
+    public static void unZipAll(File source, File destination, boolean recursively) throws ZipException,
+            IOException {
+        fireOnLogOutput("Unzipping " + source.getName());
+        ZipFile zip = new ZipFile(source);
+
+        destination.getParentFile().mkdirs();
+        Enumeration<? extends ZipEntry> zipFileEntries = zip.entries();
+
+        // Process each entry
+        while (zipFileEntries.hasMoreElements()) {
+            // grab a zip file entry
+            ZipEntry entry = (ZipEntry) zipFileEntries.nextElement();
+            String currentEntry = entry.getName();
+            File destFile = new File(destination, currentEntry);
+            // destFile = new File(newPath, destFile.getName());
+            File destinationParent = destFile.getParentFile();
+
+            // create the parent directory structure if needed
+            destinationParent.mkdirs();
+
+            if (!entry.isDirectory()) {
+                BufferedInputStream is = new BufferedInputStream(zip.getInputStream(entry));
+                int currentByte;
+                // establish buffer for writing file
+                byte data[] = new byte[UNZIP_BUFFER];
+
+                // write the current file to disk
+                FileOutputStream fos = new FileOutputStream(destFile);
+                BufferedOutputStream dest = new BufferedOutputStream(fos, UNZIP_BUFFER);
+
+                // read and write until last byte is encountered
+                while ((currentByte = is.read(data, 0, UNZIP_BUFFER)) != -1) {
+                    dest.write(data, 0, currentByte);
+                }
+                fireOnLogOutput("Unzipped " + entry.getName());
+                dest.close();
+                fos.close();
+                is.close();
+            } else {
+                // Create directory
+                destFile.mkdirs();
+                fireOnLogOutput("Creating " + destFile.getAbsolutePath());
+            }
+
+            if (recursively && currentEntry.endsWith(".zip")) {
+                // found a zip file, try to unzip it as well
+                unZipAll(destFile, destinationParent);
+                // delete the unzipped file
+                if (!destFile.delete()) {
+                    fireOnLogOutput(logger, Level.WARNING, "Creating " + destFile.getAbsolutePath());
+                }
+            }
+        }
+        zip.close();
+    }
 }
