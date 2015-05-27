@@ -7,7 +7,7 @@ package com.microsoft.projecta.tools.config;
  * @author Chundong
  */
 public enum Branch {
-    Develop("Develop"), Master("Master"), L1("Develop"), L2("Master");
+    Develop("Develop"), Master("Master");
 
     private String _value;
 

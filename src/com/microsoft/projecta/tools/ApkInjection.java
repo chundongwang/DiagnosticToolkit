@@ -20,7 +20,7 @@ public final class ApkInjection extends WorkFlowStage {
     private static Logger logger = Logger.getLogger(ApkInjection.class.getSimpleName());
 
     private LaunchConfig mConfig;
-    
+
     // progress, 0-100, and 0/100 are covered by parent class already
     private static final int PROGRESS_NEED_INJECTION_CHECK = 15;
     private static final int PROGRESS_RAW_APK_CACHED = 30;
@@ -133,8 +133,9 @@ public final class ApkInjection extends WorkFlowStage {
         fireOnLogOutput("About to start injection.");
         return new ProcessBuilder().command(join(".", "libs", "jython.bat"),
                 join(mConfig.getInjectionScriptPath(), "AutoInjection.py"), "--builddrop",
-                mConfig.getBuildDropPath(), "--output", join(mConfig.getOutdirPath(), "inject"),
-                mConfig.getOriginApkPath()).directory(new File(mConfig.getOutdirPath()));
+                mConfig.getArtBuildDropPath(), "--output", join(mConfig.getOutdirPath(), "inject"),
+                "--type", mConfig.getSdkType().toString(), mConfig.getOriginApkPath()).directory(
+                new File(mConfig.getOutdirPath()));
     }
 
 }

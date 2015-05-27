@@ -34,12 +34,20 @@ public class LaunchConfigSettings extends Dialog {
     protected Shell mShell;
     private Display mDisplay;
     private LaunchConfig mConfig;
-    private Text mTextBuildDrop;
+    private Text mTextArtBuildDrop;
     private Text mTextSdkDrop;
     private Text mTextInjectionScripts;
     private Label mLabelApkPackageName;
     private Combo mComboActivities;
     private Combo mComboSdkType;
+    private Text mTextPhoneBuildDrop;
+    private Button btnPhoneVmProvisioning;
+    private Button btnApkInjection;
+    private Button btnDeviceConnection;
+    private Button btnApkInstallation;
+    private Button btnApkLaunch;
+    private Button btnTakeScreenshots;
+    private Button btnKillAfterLaunched;
 
     /**
      * Create the dialog.
@@ -56,8 +64,23 @@ public class LaunchConfigSettings extends Dialog {
         mDisplay.asyncExec(new Runnable() {
             @Override
             public void run() {
-                if (!mConfig.getBuildDropPath().equals(mTextBuildDrop.getText())) {
-                    mTextBuildDrop.setText(mConfig.getBuildDropPath());
+                if (mConfig.shouldProvisionVM() != btnPhoneVmProvisioning.getSelection()) {
+                    btnPhoneVmProvisioning.setSelection(mConfig.shouldProvisionVM());
+                }
+                if (mConfig.shouldInject() != btnApkInjection.getSelection()) {
+                    btnApkInjection.setSelection(mConfig.shouldInject());
+                }
+                if (mConfig.shouldTakeSnapshot() != btnTakeScreenshots.getSelection()) {
+                    btnTakeScreenshots.setSelection(mConfig.shouldTakeSnapshot());
+                }
+                if (mConfig.shouldKillApp() != btnKillAfterLaunched.getSelection()) {
+                    btnKillAfterLaunched.setSelection(mConfig.shouldKillApp());
+                }
+                if (!mConfig.getArtBuildDropPath().equals(mTextArtBuildDrop.getText())) {
+                    mTextArtBuildDrop.setText(mConfig.getArtBuildDropPath());
+                }
+                if (!mConfig.getPhoneBuildDropVhdPath().equals(mTextPhoneBuildDrop.getText())) {
+                    mTextPhoneBuildDrop.setText(mConfig.getPhoneBuildDropVhdPath());
                 }
                 if (!mConfig.getSdkToolsPath().equals(mTextSdkDrop.getText())) {
                     mTextSdkDrop.setText(mConfig.getSdkToolsPath());
@@ -115,7 +138,7 @@ public class LaunchConfigSettings extends Dialog {
      */
     private void createContents() {
         mShell = new Shell(getParent(), SWT.BORDER | SWT.RESIZE | SWT.TITLE | SWT.CLOSE);
-        mShell.setSize(611, 502);
+        mShell.setSize(611, 529);
         mShell.setText("Launch Configuration");
         mShell.setLayout(new FillLayout(SWT.HORIZONTAL));
 
@@ -143,6 +166,14 @@ public class LaunchConfigSettings extends Dialog {
         mLabelApkPackageName.setText("( No Apk selected )");
 
         mComboActivities = new Combo(compositeBasic, SWT.READ_ONLY);
+        mComboActivities.addSelectionListener(new SelectionAdapter() {
+            @Override
+            public void widgetSelected(SelectionEvent e) {
+                String activity = mComboActivities.getItem(mComboActivities.getSelectionIndex());
+                mConfig.setStartupActivity(activity);
+                syncConfigToUI();
+            }
+        });
         mComboActivities.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, false, 1, 1));
         mComboActivities.setSize(99, 33);
 
@@ -188,7 +219,8 @@ public class LaunchConfigSettings extends Dialog {
         RowLayout rl_grpWorkFlow = new RowLayout(SWT.VERTICAL);
         grpWorkFlow.setLayout(rl_grpWorkFlow);
 
-        Button btnPhoneVmProvisioning = new Button(grpWorkFlow, SWT.CHECK);
+        btnPhoneVmProvisioning = new Button(grpWorkFlow, SWT.CHECK);
+        btnPhoneVmProvisioning.setEnabled(false);
         btnPhoneVmProvisioning.addSelectionListener(new SelectionAdapter() {
             @Override
             public void widgetSelected(SelectionEvent e) {
@@ -196,9 +228,8 @@ public class LaunchConfigSettings extends Dialog {
             }
         });
         btnPhoneVmProvisioning.setText("Phone VM Provisioning");
-        btnPhoneVmProvisioning.setEnabled(false);
 
-        Button btnApkInjection = new Button(grpWorkFlow, SWT.CHECK);
+        btnApkInjection = new Button(grpWorkFlow, SWT.CHECK);
         btnApkInjection.addSelectionListener(new SelectionAdapter() {
             @Override
             public void widgetSelected(SelectionEvent e) {
@@ -208,7 +239,7 @@ public class LaunchConfigSettings extends Dialog {
         btnApkInjection.setSelection(true);
         btnApkInjection.setText("Apk Injection");
 
-        Button btnDeviceConnection = new Button(grpWorkFlow, SWT.CHECK);
+        btnDeviceConnection = new Button(grpWorkFlow, SWT.CHECK);
         btnDeviceConnection.setEnabled(false);
         btnDeviceConnection.addSelectionListener(new SelectionAdapter() {
             @Override
@@ -218,7 +249,7 @@ public class LaunchConfigSettings extends Dialog {
         btnDeviceConnection.setSelection(true);
         btnDeviceConnection.setText("Device Connection");
 
-        Button btnApkInstallation = new Button(grpWorkFlow, SWT.CHECK);
+        btnApkInstallation = new Button(grpWorkFlow, SWT.CHECK);
         btnApkInstallation.setEnabled(false);
         btnApkInstallation.addSelectionListener(new SelectionAdapter() {
             @Override
@@ -228,7 +259,7 @@ public class LaunchConfigSettings extends Dialog {
         btnApkInstallation.setSelection(true);
         btnApkInstallation.setText("Apk Installation");
 
-        Button btnApkLaunch = new Button(grpWorkFlow, SWT.CHECK);
+        btnApkLaunch = new Button(grpWorkFlow, SWT.CHECK);
         btnApkLaunch.setEnabled(false);
         btnApkLaunch.addSelectionListener(new SelectionAdapter() {
             @Override
@@ -238,7 +269,7 @@ public class LaunchConfigSettings extends Dialog {
         btnApkLaunch.setSelection(true);
         btnApkLaunch.setText("Apk Launch");
 
-        Button btnTakeScreenshots = new Button(grpWorkFlow, SWT.CHECK);
+        btnTakeScreenshots = new Button(grpWorkFlow, SWT.CHECK);
         btnTakeScreenshots.addSelectionListener(new SelectionAdapter() {
             @Override
             public void widgetSelected(SelectionEvent e) {
@@ -248,7 +279,7 @@ public class LaunchConfigSettings extends Dialog {
         btnTakeScreenshots.setText("Take screenshots");
         btnTakeScreenshots.setEnabled(false);
 
-        Button btnKillAfterLaunched = new Button(grpWorkFlow, SWT.CHECK);
+        btnKillAfterLaunched = new Button(grpWorkFlow, SWT.CHECK);
         btnKillAfterLaunched.addSelectionListener(new SelectionAdapter() {
             @Override
             public void widgetSelected(SelectionEvent e) {
@@ -265,32 +296,32 @@ public class LaunchConfigSettings extends Dialog {
         Composite compositePaths = new Composite(grpPaths, SWT.NONE);
         compositePaths.setLayout(new GridLayout(2, false));
 
-        mTextBuildDrop = new Text(compositePaths, SWT.BORDER);
-        mTextBuildDrop.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, false, 1, 1));
-        mTextBuildDrop.setSize(467, 31);
-        mTextBuildDrop.setText("( loading... )");
-        mTextBuildDrop.addModifyListener(new ModifyListener() {
+        mTextArtBuildDrop = new Text(compositePaths, SWT.BORDER);
+        mTextArtBuildDrop.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, false, 1, 1));
+        mTextArtBuildDrop.setSize(467, 31);
+        mTextArtBuildDrop.setText("( loading... )");
+        mTextArtBuildDrop.addModifyListener(new ModifyListener() {
             public void modifyText(ModifyEvent e) {
-                mConfig.setBuildDropPath(((Text) e.widget).getText());
+                mConfig.setArtBuildDropPath(((Text) e.widget).getText());
                 syncConfigToUI();
             }
         });
 
-        Button btnBuildDrop = new Button(compositePaths, SWT.NONE);
-        btnBuildDrop.addSelectionListener(new SelectionAdapter() {
+        Button btnArtBuildDrop = new Button(compositePaths, SWT.NONE);
+        btnArtBuildDrop.addSelectionListener(new SelectionAdapter() {
             @Override
             public void widgetSelected(SelectionEvent e) {
                 String buildDropPath = Utils.pickDirectory("Pick the build drop dir",
                         "Select a folder either from nightly build or your aosp output folder.",
-                        mConfig.getBuildDropPath(), mShell);
+                        mConfig.getArtBuildDropPath(), mShell);
                 if (buildDropPath != null) {
-                    mTextBuildDrop.setText(buildDropPath);
+                    mTextArtBuildDrop.setText(buildDropPath);
                 }
             }
         });
-        btnBuildDrop.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, false, false, 1, 1));
-        btnBuildDrop.setSize(204, 35);
-        btnBuildDrop.setText("Build Drop");
+        btnArtBuildDrop.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, false, false, 1, 1));
+        btnArtBuildDrop.setSize(204, 35);
+        btnArtBuildDrop.setText("ART Build");
 
         mTextSdkDrop = new Text(compositePaths, SWT.BORDER);
         mTextSdkDrop.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, false, false, 1, 1));
@@ -311,7 +342,7 @@ public class LaunchConfigSettings extends Dialog {
                         "Select a folder with Project A sdk tools.", mConfig.getSdkToolsPath(),
                         mShell);
                 if (sdkToolPath != null) {
-                    mTextBuildDrop.setText(sdkToolPath);
+                    mTextArtBuildDrop.setText(sdkToolPath);
                 }
             }
         });
@@ -345,6 +376,32 @@ public class LaunchConfigSettings extends Dialog {
         btnInjectionScripts.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, false, false, 1, 1));
         btnInjectionScripts.setText("Inject Scripts");
         btnInjectionScripts.setBounds(0, 0, 88, 35);
+
+        mTextPhoneBuildDrop = new Text(compositePaths, SWT.BORDER);
+        mTextPhoneBuildDrop.setText("( loading... )");
+        mTextPhoneBuildDrop.addModifyListener(new ModifyListener() {
+            public void modifyText(ModifyEvent e) {
+                mConfig.setPhoneBuildDropVhdPath(((Text) e.widget).getText());
+                syncConfigToUI();
+            }
+        });
+        mTextPhoneBuildDrop.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, false, 1, 1));
+
+        Button btnPhoneBuild = new Button(compositePaths, SWT.NONE);
+        btnInjectionScripts.addSelectionListener(new SelectionAdapter() {
+            @Override
+            public void widgetSelected(SelectionEvent e) {
+                String phoneBuildDropPath = Utils
+                        .pickDirectory(
+                                "Pick the phone build path",
+                                "Select a folder either from daily build or your phone build output which contains flash.vhd.",
+                                mConfig.getPhoneBuildDropVhdPath(), mShell);
+                if (phoneBuildDropPath != null) {
+                    mTextPhoneBuildDrop.setText(phoneBuildDropPath);
+                }
+            }
+        });
+        btnPhoneBuild.setText("Phone Build");
 
         scrolledComposite.setContent(composite_inner);
         scrolledComposite.setMinSize(composite_inner.computeSize(SWT.DEFAULT, SWT.DEFAULT));

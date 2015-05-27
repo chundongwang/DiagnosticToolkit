@@ -244,9 +244,9 @@ public class LauncherWindow {
             public void widgetSelected(SelectionEvent e) {
                 String buildDropPath = Utils.pickDirectory("Pick the build drop dir",
                         "Select a folder either from nightly build or your aosp output folder.",
-                        mConfig.getBuildDropPath(), shlDiagnosticLauncher);
+                        mConfig.getArtBuildDropPath(), shlDiagnosticLauncher);
                 if (buildDropPath != null) {
-                    mConfig.setBuildDropPath(buildDropPath);
+                    mConfig.setArtBuildDropPath(buildDropPath);
                     syncConfigToUI();
                 }
             }
@@ -498,7 +498,7 @@ public class LauncherWindow {
             mConfig = config;
         }
 
-        mTextBuildDrop.setText(mConfig.getBuildDropPath());
+        mTextBuildDrop.setText(mConfig.getArtBuildDropPath());
         mTextTakehomePath.setText(mConfig.getTakehomeScriptPath());
         mTextSdkToolsPath.setText(mConfig.getSdkToolsPath());
         mTextInjectionScriptPath.setText(mConfig.getInjectionScriptPath());

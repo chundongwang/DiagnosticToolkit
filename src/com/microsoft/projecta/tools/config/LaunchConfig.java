@@ -7,7 +7,10 @@ import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Arrays;
+import java.util.Comparator;
 import java.util.List;
 import java.util.logging.Logger;
 
@@ -31,8 +34,13 @@ public final class LaunchConfig {
             mConfigInstance = new LaunchConfig();
         }
 
-        public Builder addBuildDrop(String buildDropPath) {
-            mConfigInstance.mBuildDropPath = buildDropPath;
+        public Builder addPhoneBuildDropVhd(String buildDropPath) {
+            mConfigInstance.mPhoneBuildDropVhdPath = buildDropPath;
+            return this;
+        }
+
+        public Builder addArtBuildDrop(String buildDropPath) {
+            mConfigInstance.mARTBuildDropPath = buildDropPath;
             return this;
         }
 
@@ -62,8 +70,8 @@ public final class LaunchConfig {
         }
 
         public LaunchConfig build() {
-            if (mConfigInstance.mBuildDropPath == null) {
-                mConfigInstance.mBuildDropPath = parseLatestPath("\\\\build\\release\\AppStrULBuild\\ART "
+            if (mConfigInstance.mARTBuildDropPath == null) {
+                mConfigInstance.mARTBuildDropPath = parseLatestPath("\\\\build\\release\\AppStrULBuild\\ART "
                         + mBranch.getValue() + " Nightly\\latest.txt");
             }
             if (mConfigInstance.mTakehomeScriptPath == null) {
@@ -77,11 +85,48 @@ public final class LaunchConfig {
             if (mConfigInstance.mInjectionScriptPath == null) {
                 mConfigInstance.mInjectionScriptPath = "\\\\pan\\arcadia\\team\\users\\chunwang\\Injection\\autoInjection";
             }
-            mConfigInstance.mShouldProvisionVM = false;
-            mConfigInstance.mShouldInject = true;
-            mConfigInstance.mShouldTakeSnapshot = false;
-            mConfigInstance.mShouldKillApp = false;
-            mConfigInstance.mSdkType = SdkType.GP_INTEROP;
+            if (mConfigInstance.mPhoneBuildDropVhdPath == null) {
+                String phoneBuildDropBase = null;
+                if (mBranch == Branch.Develop) {
+                    phoneBuildDropBase = "\\\\build\\release\\Threshold\\FBL_AOW_DEV01";
+                } else if (mBranch == Branch.Master) {
+                    phoneBuildDropBase = "\\\\build\\release\\Threshold\\FBL_AOW";
+                }
+
+                // Check
+                // \\build\release\Threshold\FBL_AOW_DEV01\<build>\x86_windowsphone_vm_allres_Test_fre_USA.done
+                Path base = Paths.get(phoneBuildDropBase);
+                File[] dirs = base.toFile().listFiles();
+                Arrays.sort(dirs, new Comparator<File>() {
+                    /**
+                     * Reverse the order to get latest directory first
+                     */
+                    @Override
+                    public int compare(File o1, File o2) {
+                        return o2.compareTo(o1);
+                    }
+                });
+                for (File dir : dirs) {
+                    if (dir.isDirectory() && dir.getName().startsWith("FBL_AOW")) {
+                        Path candidate = base.resolve(dir.getName());
+                        Path done_flag = candidate
+                                .resolve("x86_windowsphone_vm_allres_Test_fre_USA.done");
+                        if (Files.isRegularFile(done_flag)) {
+                            // MC.x86fre\Binaries\Images\vm_allres\Test\USA
+                            Path vhd_base = Paths.get(candidate.toAbsolutePath().toString(),
+                                    "MC.x86fre", "Binaries", "Images", "vm_allres", "Test", "USA");
+                            Path flash_vhd = vhd_base.resolve("Flash.vhd");
+                            Path flash_debug_vhd = vhd_base.resolve("Flash_Debug.vhd");
+                            if (Files.isRegularFile(flash_vhd)
+                                    && Files.isRegularFile(flash_debug_vhd)) {
+                                mConfigInstance.mPhoneBuildDropVhdPath = vhd_base.toAbsolutePath()
+                                        .toString();
+                            }
+                            break;
+                        }
+                    }
+                }
+            }
             logger.fine(String.format("Launch config loaded as\n%s", mConfigInstance));
             return mConfigInstance;
         }
@@ -133,7 +178,8 @@ public final class LaunchConfig {
         }
     }
 
-    private String mBuildDropPath;
+    private String mPhoneBuildDropVhdPath;
+    private String mARTBuildDropPath;
     private String mTakehomeScriptPath;
     private String mSdkToolsPath;
     private String mInjectionScriptPath;
@@ -141,6 +187,7 @@ public final class LaunchConfig {
     private String mOriginApkPath;
     private String mOutdirPath;
     private String mInjectedApkPath;
+    private String mLocalVhdPath;
     private String mUnzippedSdkToolsPath;
     private AndroidManifestInfo mApkPackageInfo;
     private String mStartupActivity;
@@ -151,6 +198,11 @@ public final class LaunchConfig {
     private SdkType mSdkType;
 
     private LaunchConfig() {
+        mShouldProvisionVM = false;
+        mShouldInject = true;
+        mShouldTakeSnapshot = false;
+        mShouldKillApp = false;
+        mSdkType = SdkType.GP_INTEROP;
     }
 
     public String getActivityToLaunch() {
@@ -198,8 +250,8 @@ public final class LaunchConfig {
     /**
      * @return the buildDropPath
      */
-    public String getBuildDropPath() {
-        return mBuildDropPath;
+    public String getArtBuildDropPath() {
+        return mARTBuildDropPath;
     }
 
     /**
@@ -338,8 +390,8 @@ public final class LaunchConfig {
     /**
      * @param buildDropPath the buildDropPath to set
      */
-    public void setBuildDropPath(String buildDropPath) {
-        mBuildDropPath = buildDropPath;
+    public void setArtBuildDropPath(String buildDropPath) {
+        mARTBuildDropPath = buildDropPath;
     }
 
     /**
@@ -503,6 +555,41 @@ public final class LaunchConfig {
     }
 
     /**
+     * @return the phoneBuildDropPath
+     */
+    public String getPhoneBuildDropVhdPath() {
+        return mPhoneBuildDropVhdPath;
+    }
+
+    /**
+     * @param phoneBuildDropPath the phoneBuildDropPath to set
+     */
+    public void setPhoneBuildDropVhdPath(String phoneBuildDropPath) {
+        mPhoneBuildDropVhdPath = phoneBuildDropPath;
+    }
+
+    /**
+     * @return the local path of Flash.vhd
+     */
+    public String getLocalVhdPath() {
+        return mLocalVhdPath;
+    }
+
+    /**
+     * @param localVhdPath the local path of Flash.vhd to set
+     */
+    public void setLocalVhdPath(String localVhdPath) {
+        mLocalVhdPath = localVhdPath;
+    }
+
+    /**
+     * @return if has localVhdPath
+     */
+    public boolean hasLocalVhdPath() {
+        return mLocalVhdPath != null && mLocalVhdPath.length() > 0;
+    }
+
+    /**
      * Validate this config to see if it's runnable
      * 
      * @return
@@ -522,7 +609,9 @@ public final class LaunchConfig {
 
     public String toString() {
         StringBuilder builder = new StringBuilder();
-        builder.append(String.format("Build Drop Path=%s", mBuildDropPath));
+        builder.append(String.format("ART Build Drop Path=%s", mARTBuildDropPath));
+        builder.append('\n');
+        builder.append(String.format("Phone Build Drop Path=%s", mPhoneBuildDropVhdPath));
         builder.append('\n');
         builder.append(String.format("Takehome Script Path=%s", mTakehomeScriptPath));
         builder.append('\n');
