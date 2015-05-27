@@ -5,6 +5,8 @@ import java.util.List;
 
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.custom.ScrolledComposite;
+import org.eclipse.swt.events.ModifyEvent;
+import org.eclipse.swt.events.ModifyListener;
 import org.eclipse.swt.events.SelectionAdapter;
 import org.eclipse.swt.events.SelectionEvent;
 import org.eclipse.swt.graphics.Point;
@@ -54,9 +56,15 @@ public class LaunchConfigSettings extends Dialog {
         mDisplay.asyncExec(new Runnable() {
             @Override
             public void run() {
-                mTextBuildDrop.setText(mConfig.getBuildDropPath());
-                mTextSdkDrop.setText(mConfig.getSdkToolsPath());
-                mTextInjectionScripts.setText(mConfig.getInjectionScriptPath());
+                if (!mConfig.getBuildDropPath().equals(mTextBuildDrop.getText())) {
+                    mTextBuildDrop.setText(mConfig.getBuildDropPath());
+                }
+                if (!mConfig.getSdkToolsPath().equals(mTextSdkDrop.getText())) {
+                    mTextSdkDrop.setText(mConfig.getSdkToolsPath());
+                }
+                if (!mConfig.getInjectionScriptPath().equals(mTextInjectionScripts.getText())) {
+                    mTextInjectionScripts.setText(mConfig.getInjectionScriptPath());
+                }
                 if (mConfig.hasApkPackageInfo()) {
                     mLabelApkPackageName.setText(mConfig.getApkPackageName());
                     List<String> activities = mConfig.getApkActivities();
@@ -261,6 +269,12 @@ public class LaunchConfigSettings extends Dialog {
         mTextBuildDrop.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, false, 1, 1));
         mTextBuildDrop.setSize(467, 31);
         mTextBuildDrop.setText("( loading... )");
+        mTextBuildDrop.addModifyListener(new ModifyListener() {
+            public void modifyText(ModifyEvent e) {
+                mConfig.setBuildDropPath(((Text) e.widget).getText());
+                syncConfigToUI();
+            }
+        });
 
         Button btnBuildDrop = new Button(compositePaths, SWT.NONE);
         btnBuildDrop.addSelectionListener(new SelectionAdapter() {
@@ -270,8 +284,7 @@ public class LaunchConfigSettings extends Dialog {
                         "Select a folder either from nightly build or your aosp output folder.",
                         mConfig.getBuildDropPath(), mShell);
                 if (buildDropPath != null) {
-                    mConfig.setBuildDropPath(buildDropPath);
-                    syncConfigToUI();
+                    mTextBuildDrop.setText(buildDropPath);
                 }
             }
         });
@@ -282,6 +295,12 @@ public class LaunchConfigSettings extends Dialog {
         mTextSdkDrop = new Text(compositePaths, SWT.BORDER);
         mTextSdkDrop.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, false, false, 1, 1));
         mTextSdkDrop.setText("( loading... )");
+        mTextSdkDrop.addModifyListener(new ModifyListener() {
+            public void modifyText(ModifyEvent e) {
+                mConfig.setSdkToolsPath(((Text) e.widget).getText());
+                syncConfigToUI();
+            }
+        });
         mTextSdkDrop.setBounds(0, 0, 467, 31);
 
         Button btnSdkDrop = new Button(compositePaths, SWT.NONE);
@@ -292,8 +311,7 @@ public class LaunchConfigSettings extends Dialog {
                         "Select a folder with Project A sdk tools.", mConfig.getSdkToolsPath(),
                         mShell);
                 if (sdkToolPath != null) {
-                    mConfig.setSdkToolsPath(sdkToolPath);
-                    syncConfigToUI();
+                    mTextBuildDrop.setText(sdkToolPath);
                 }
             }
         });
@@ -304,6 +322,12 @@ public class LaunchConfigSettings extends Dialog {
         mTextInjectionScripts = new Text(compositePaths, SWT.BORDER);
         mTextInjectionScripts.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, false, false, 1, 1));
         mTextInjectionScripts.setText("( loading... )");
+        mTextInjectionScripts.addModifyListener(new ModifyListener() {
+            public void modifyText(ModifyEvent e) {
+                mConfig.setInjectionScriptPath(((Text) e.widget).getText());
+                syncConfigToUI();
+            }
+        });
         mTextInjectionScripts.setBounds(0, 0, 467, 31);
 
         Button btnInjectionScripts = new Button(compositePaths, SWT.NONE);
@@ -314,8 +338,7 @@ public class LaunchConfigSettings extends Dialog {
                         "Select a folder with injection scripts and related tools.",
                         mConfig.getInjectionScriptPath(), mShell);
                 if (injectScriptPath != null) {
-                    mConfig.setInjectionScriptPath(injectScriptPath);
-                    syncConfigToUI();
+                    mTextInjectionScripts.setText(injectScriptPath);
                 }
             }
         });

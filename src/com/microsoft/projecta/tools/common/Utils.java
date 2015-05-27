@@ -222,7 +222,7 @@ public class Utils {
             // create the parent directory structure if needed
             destinationParent.mkdirs();
 
-            if (filter != null && filter.shouldUnzip(entry)) {
+            if (filter == null || filter.shouldUnzip(entry)) {
                 if (!entry.isDirectory()) {
                     BufferedInputStream is = new BufferedInputStream(zip.getInputStream(entry));
                     int currentByte;

@@ -1,20 +1,13 @@
 
 package com.microsoft.projecta.tools;
 
-import java.io.BufferedInputStream;
-import java.io.BufferedOutputStream;
-import java.io.File;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.Enumeration;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.zip.ZipEntry;
-import java.util.zip.ZipException;
-import java.util.zip.ZipFile;
 
 import com.microsoft.projecta.tools.common.Loggable;
 import com.microsoft.projecta.tools.common.UnzipFilter;
@@ -27,7 +20,6 @@ import com.microsoft.projecta.tools.workflow.WorkFlowStatus;
 
 public final class DeviceConnection extends WorkFlowStage {
     private static Logger logger = Logger.getLogger(DeviceConnection.class.getSimpleName());
-    private static final int UNZIP_BUFFER = 2048;
 
     // progress, 0-100, and 0/100 are covered by parent class already
     private static final int PROGRESS_UNZIPPED_CHECK = 15;
