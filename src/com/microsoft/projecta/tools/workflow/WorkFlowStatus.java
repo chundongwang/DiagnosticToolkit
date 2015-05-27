@@ -7,18 +7,20 @@ import com.microsoft.projecta.tools.ApkKiller;
 import com.microsoft.projecta.tools.ApkMainLauncher;
 import com.microsoft.projecta.tools.DeviceConnection;
 import com.microsoft.projecta.tools.ProvisionVM;
+import com.microsoft.projecta.tools.RawApkVerifier;
+import com.microsoft.projecta.tools.ScreenShotTaker;
 
 public enum WorkFlowStatus {
     /*
      * Order matters.
      */
-    RAW_APK(null),
+    RAW_APK(RawApkVerifier.class),
     PROVISION_VM(ProvisionVM.class),
     CONNECT_DEVICE(DeviceConnection.class),
     INJECT_APK(ApkInjection.class),
     INSTALL_APP(ApkInstaller.class),
     LAUNCH_APP(ApkMainLauncher.class),
-    TAKE_SCREENSHOT(null),
+    TAKE_SCREENSHOT(ScreenShotTaker.class),
     KILL_APP(ApkKiller.class);
 
     private Class<? extends WorkFlowStage> mKlazz;
