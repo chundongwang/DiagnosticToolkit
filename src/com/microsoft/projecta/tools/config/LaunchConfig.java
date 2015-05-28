@@ -34,6 +34,31 @@ public final class LaunchConfig {
             mConfigInstance = new LaunchConfig();
         }
 
+        /**
+         * Take in values of from other config if the field is null for this object
+         * 
+         * @param another
+         * @return
+         */
+        public Builder addLaunchConfig(LaunchConfig another) {
+            if (mConfigInstance.mARTBuildDropPath == null) {
+                mConfigInstance.mARTBuildDropPath = another.getArtBuildDropPath();
+            }
+            if (mConfigInstance.mTakehomeScriptPath == null) {
+                mConfigInstance.mARTBuildDropPath = another.getTakehomeScriptPath();
+            }
+            if (mConfigInstance.mSdkToolsPath == null) {
+                mConfigInstance.mSdkToolsPath = another.getSdkToolsPath();
+            }
+            if (mConfigInstance.mInjectionScriptPath == null) {
+                mConfigInstance.mInjectionScriptPath = another.getInjectionScriptPath();
+            }
+            if (mConfigInstance.mPhoneBuildDropVhdPath == null) {
+                mConfigInstance.mPhoneBuildDropVhdPath = another.getPhoneBuildDropVhdPath();
+            }
+            return this;
+        }
+
         public Builder addPhoneBuildDropVhd(String buildDropPath) {
             mConfigInstance.mPhoneBuildDropVhdPath = buildDropPath;
             return this;
@@ -70,6 +95,10 @@ public final class LaunchConfig {
         }
 
         public LaunchConfig build() {
+            return mConfigInstance;
+        }
+
+        public Builder loadDefaults() {
             if (mConfigInstance.mARTBuildDropPath == null) {
                 mConfigInstance.mARTBuildDropPath = parseLatestPath("\\\\build\\release\\AppStrULBuild\\ART "
                         + mBranch.getValue() + " Nightly\\latest.txt");
@@ -128,7 +157,7 @@ public final class LaunchConfig {
                 }
             }
             logger.fine(String.format("Launch config loaded as\n%s", mConfigInstance));
-            return mConfigInstance;
+            return this;
         }
 
         private String parseLatestPath(String latest_file_path) {

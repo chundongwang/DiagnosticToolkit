@@ -91,10 +91,18 @@ public class SimplisticLauncher {
                 setConfig(new LaunchConfig.Builder(branch)
                         .addOutDir(System.getProperty("user.dir"))
                         .addDeviceIP(retrieveDeviceIPAddress()).build());
+                Thread configLoadDefaultsThread = new Thread(new Runnable() {
+                    @Override
+                    public void run() {
+                        setConfig(new LaunchConfig.Builder(branch).loadDefaults()
+                                .addLaunchConfig(getConfig()).build());
+                    }
+                });
+                configLoadDefaultsThread.start();
             }
         });
         configThread.start();
-        
+
         // With splash screen, we should wait for configuration done.
         try {
             configThread.join();
