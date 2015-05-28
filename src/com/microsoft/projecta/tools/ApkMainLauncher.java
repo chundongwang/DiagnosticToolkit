@@ -112,27 +112,28 @@ public class ApkMainLauncher extends WorkFlowStage {
      */
     @Override
     protected ProcessBuilder startWorkerProcess() {
+        StringBuilder componentName = new StringBuilder();
+        componentName.append(mConfig.getApkPackageName());
+        componentName.append('/');
+        componentName.append(mConfig.getActivityToLaunch());
+
+        ProcessBuilder pb = null;
         if (mConfig.getActivityToLaunch().equals(mConfig.getApkMainActivity())) {
             fireOnLogOutput("About to adb shell am start -a android.intent.action.MAIN -c android.intent.category.LAUNCHER -n "
-                    + mConfig.getApkPackageName() + "/" + mConfig.getActivityToLaunch());
-            fireOnProgress(PROGRESS_ADB_AM_STARTED);
+                    + componentName);
 
-            return new ProcessBuilder().command(
-                    mAdbHelper.getAdbPath().toString(),
-                    "shell", "am", "start", "-a", "android.intent.action.MAIN", "-c",
-                    "android.intent.category.LAUNCHER", "-n",
-                    mConfig.getApkPackageName() + "/" + mConfig.getActivityToLaunch()).directory(
+            pb = new ProcessBuilder().command(mAdbHelper.getAdbPath().toString(), "shell", "am",
+                    "start", "-a", "android.intent.action.MAIN", "-c",
+                    "android.intent.category.LAUNCHER", "-n", componentName.toString()).directory(
                     new File(mConfig.getOutdirPath()));
         } else {
-            fireOnLogOutput("About to adb shell am start -n "
-                    + mConfig.getApkPackageName() + "/" + mConfig.getActivityToLaunch());
-            fireOnProgress(PROGRESS_ADB_AM_STARTED);
+            fireOnLogOutput("About to adb shell am start -n " + componentName);
 
-            return new ProcessBuilder().command(
-                    mAdbHelper.getAdbPath().toString(),
-                    "shell", "am", "start", "-n",
-                    mConfig.getApkPackageName() + "/" + mConfig.getActivityToLaunch()).directory(
+            pb = new ProcessBuilder().command(mAdbHelper.getAdbPath().toString(), "shell", "am",
+                    "start", "-n", componentName.toString()).directory(
                     new File(mConfig.getOutdirPath()));
         }
+        fireOnProgress(PROGRESS_ADB_AM_STARTED);
+        return pb;
     }
 }
